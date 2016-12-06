@@ -168,3 +168,6 @@ attribute hal_wifi;
 attribute qti_debugfs_domain;
 attribute hal_wifi_client;
 attribute hal_wifi_server;
+
+# Domain type used by test teams
+attribute qti_testscripts_domain;
