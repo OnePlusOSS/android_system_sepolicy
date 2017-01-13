@@ -27,8 +27,9 @@ connectivity_metrics_logger               u:object_r:connectivity_metrics_logger
 connmetrics                               u:object_r:connmetrics_service:s0
 consumer_ir                               u:object_r:consumer_ir_service:s0
 content                                   u:object_r:content_service:s0
-contexthub_service                        u:object_r:contexthub_service:s0
+contexthub                                u:object_r:contexthub_service:s0
 country_detector                          u:object_r:country_detector_service:s0
+coverage                                  u:object_r:coverage_service:s0
 cpuinfo                                   u:object_r:cpuinfo_service:s0
 dbinfo                                    u:object_r:dbinfo_service:s0
 device_policy                             u:object_r:device_policy_service:s0
@@ -56,6 +57,7 @@ hdmi_control                              u:object_r:hdmi_control_service:s0
 inputflinger                              u:object_r:inputflinger_service:s0
 input_method                              u:object_r:input_method_service:s0
 input                                     u:object_r:input_service:s0
+installd                                  u:object_r:installd_service:s0
 iphonesubinfo_msim                        u:object_r:radio_service:s0
 iphonesubinfo2                            u:object_r:radio_service:s0
 iphonesubinfo                             u:object_r:radio_service:s0
@@ -75,6 +77,7 @@ media.camera                              u:object_r:cameraserver_service:s0
 media.camera.proxy                        u:object_r:cameraproxy_service:s0
 media.log                                 u:object_r:audioserver_service:s0
 media.player                              u:object_r:mediaserver_service:s0
+media.analytics                           u:object_r:mediaanalytics_service:s0
 media.extractor                           u:object_r:mediaextractor_service:s0
 media.codec                               u:object_r:mediacodec_service:s0
 media.resource_manager                    u:object_r:mediaserver_service:s0
@@ -130,6 +133,7 @@ simphonebook                              u:object_r:radio_service:s0
 sip                                       u:object_r:radio_service:s0
 soundtrigger                              u:object_r:voiceinteraction_service:s0
 statusbar                                 u:object_r:statusbar_service:s0
+storaged                                  u:object_r:storaged_service:s0
 SurfaceFlinger                            u:object_r:surfaceflinger_service:s0
 task                                      u:object_r:task_service:s0
 telecom                                   u:object_r:telecom_service:s0

@@ -5,6 +5,7 @@ tmpfs_domain(init)
 # Transitions to seclabel processes in init.rc
 domain_trans(init, rootfs, adbd)
 domain_trans(init, rootfs, charger)
+domain_trans(init, rootfs, healthd)
 domain_trans(init, rootfs, slideshow)
 recovery_only(`
   domain_trans(init, rootfs, recovery)
@@ -14,5 +15,5 @@ domain_trans(init, init_exec, ueventd)
 domain_trans(init, init_exec, watchdogd)
 # case where logpersistd is actually logcat -f in logd context (nee: logcatd)
 userdebug_or_eng(`
-  domain_auto_trans(init, logcat_exec, logd)
+  domain_auto_trans(init, logcat_exec, logpersist)
 ')

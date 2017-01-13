@@ -8,6 +8,11 @@ type webview_zygote_exec, exec_type, file_type;
 # Access to system files for SELinux contexts.
 allow webview_zygote rootfs:file r_file_perms;
 
+# Allow reading/executing installed binaries to enable preloading the
+# installed WebView implementation.
+allow webview_zygote apk_data_file:dir r_dir_perms;
+allow webview_zygote apk_data_file:file { r_file_perms execute };
+
 # Access to the WebView relro file.
 allow webview_zygote shared_relro_file:dir search;
 allow webview_zygote shared_relro_file:file r_file_perms;
@@ -24,6 +29,11 @@ allow webview_zygote isolated_app:process dyntransition;
 allow webview_zygote dalvikcache_data_file:dir r_dir_perms;
 allow webview_zygote dalvikcache_data_file:lnk_file r_file_perms;
 allow webview_zygote dalvikcache_data_file:file { r_file_perms execute };
+
+# Allow webview_zygote to stat the files that it opens. It must
+# be able to inspect them so that it can reopen them on fork
+# if necessary: b/30963384.
+allow webview_zygote debugfs_trace_marker:file getattr;
 
 # Allow webview_zygote to manage the pgroup of its children.
 allow webview_zygote system_server:process getpgid;
@@ -42,6 +52,17 @@ selinux_check_access(webview_zygote)
 
 # Only permit transition to isolated_app.
 neverallow webview_zygote { domain -isolated_app }:process dyntransition;
+
+# Only setcon() transitions, no exec() based transitions
+neverallow webview_zygote *:process transition;
+
+# Must not exec() a program without changing domains.
+# Having said that, exec() above is not allowed.
+neverallow webview_zygote *:file execute_no_trans;
+
+# The only way to enter this domain is for init to exec() us.
+neverallow { domain -init } webview_zygote:process transition;
+neverallow * webview_zygote:process dyntransition;
 
 # Disallow write access to properties.
 neverallow webview_zygote property_socket:sock_file write;
@@ -81,3 +102,7 @@ neverallow webview_zygote domain:{
   netlink_fib_lookup_socket netlink_connector_socket netlink_netfilter_socket
   netlink_generic_socket netlink_scsitransport_socket netlink_rdma_socket netlink_crypto_socket
 } *;
+
+# Do not allow access to Bluetooth-related system properties.
+# neverallow rules for Bluetooth-related data files are listed above.
+neverallow webview_zygote bluetooth_prop:file create_file_perms;

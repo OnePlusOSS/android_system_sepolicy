@@ -192,6 +192,8 @@ allow servicemanager $1:process getattr;
 define(`hwbinder_use', `
 # Call the hwservicemanager and transfer references to it.
 allow $1 hwservicemanager:binder { call transfer };
+# Allow hwservicemanager to send out callbacks
+allow hwservicemanager $1:binder { call transfer };
 # hwservicemanager performs getpidcon on clients.
 allow hwservicemanager $1:dir search;
 allow hwservicemanager $1:file { read open };
@@ -219,6 +221,14 @@ allow $1 $2:fd use;
 define(`binder_service', `
 typeattribute $1 binderservicedomain;
 ')
+
+#####################################
+# hwallocator_use(domain)
+# Allow a domain to use Hidl shared memory
+define(`hwallocator_use', `
+# Call into the allocator hal
+binder_call($1, hal_allocator);
+'')
 
 #####################################
 # wakelock_use(domain)
@@ -284,20 +294,12 @@ define(`recovery_only', ifelse(target_recovery, `true', $1, ))
 # SELinux rules which apply only to userdebug or eng builds
 #
 define(`userdebug_or_eng', ifelse(target_build_variant, `eng', $1, ifelse(target_build_variant, `userdebug', $1)))
-define(`eng', ifelse(target_build_variant, `eng', $1))
-
-#####################################
-# SELinux rules for HALs that have either been binderized or are
-# still passthrough.
-#
-define(`binderized_hal', ifelse(target_build_treble, `true', $1))
-define(`passthrough_hal', ifelse(target_build_treble, `', $1))
 
 #####################################
 # WITH_DEXPREOPT builds
-# SELinux rules which apply only when pre-opting with PIC.
+# SELinux rules which apply only when pre-opting.
 #
-define(`with_dexpreopt', ifelse(target_with_dexpreopt, `true', ifelse(target_with_dexpreopt_pic, `true', $1)))
+define(`with_dexpreopt', ifelse(target_with_dexpreopt, `true', $1))
 
 #####################################
 # write_logd(domain)

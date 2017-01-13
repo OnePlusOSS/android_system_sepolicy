@@ -20,6 +20,7 @@ type proc_net, fs_type;
 type proc_stat, fs_type;
 type proc_sysrq, fs_type;
 type proc_timer, fs_type;
+type proc_tty_drivers, fs_type;
 type proc_uid_cputime_showstat, fs_type;
 type proc_uid_cputime_removeuid, fs_type;
 type proc_zoneinfo, fs_type;
@@ -56,10 +57,11 @@ type fuse, sdcard_type, fs_type, mlstrustedobject;
 type sdcardfs, sdcard_type, fs_type, mlstrustedobject;
 type vfat, sdcard_type, fs_type, mlstrustedobject;
 type debugfs, fs_type;
+type debugfs_mmc, fs_type, debugfs_type;
 type debugfs_trace_marker, fs_type, debugfs_type, mlstrustedobject;
 type debugfs_tracing, fs_type, debugfs_type;
 type pstorefs, fs_type;
-type functionfs, fs_type;
+type functionfs, fs_type, mlstrustedobject;
 type oemfs, fs_type, contextmount_type;
 type usbfs, fs_type;
 type binfmt_miscfs, fs_type;
@@ -172,16 +174,12 @@ type perfprofd_data_file, file_type, data_file_type, mlstrustedobject;
 # /data/misc/trace for method traces on userdebug / eng builds
 type method_trace_data_file, file_type, data_file_type, mlstrustedobject;
 
-# Compatibility with type names used in vanilla Android 4.3 and 4.4.
-typealias audio_data_file alias audio_firmware_file;
 # /data/data subdirectories - app sandboxes
 type app_data_file, file_type, data_file_type;
 type ephemeral_data_file, file_type, data_file_type;
 # /data/data subdirectory for system UID apps.
 type system_app_data_file, file_type, data_file_type, mlstrustedobject;
 # Compatibility with type name used in Android 4.3 and 4.4.
-typealias app_data_file alias platform_app_data_file;
-typealias app_data_file alias download_file;
 # Default type for anything under /cache
 type cache_file, file_type, mlstrustedobject;
 # Type for /cache/backup_stage/* (fd interchange with apps)
@@ -221,7 +219,6 @@ type bluetooth_socket, file_type;
 type dnsproxyd_socket, file_type, mlstrustedobject;
 type dumpstate_socket, file_type;
 type fwmarkd_socket, file_type, mlstrustedobject;
-type installd_socket, file_type;
 type lmkd_socket, file_type;
 type logd_socket, file_type, mlstrustedobject;
 type logdr_socket, file_type, mlstrustedobject;

@@ -25,7 +25,6 @@ allow system_server self:process ptrace;
 # Child of the zygote.
 allow system_server zygote:fd use;
 allow system_server zygote:process sigchld;
-allow system_server zygote_tmpfs:file read;
 
 # May kill zygote on crashes.
 allow system_server zygote:process sigkill;
@@ -92,6 +91,7 @@ allow system_server { appdomain ephemeral_app }:process { sigkill signal };
 # Set scheduling info for apps.
 allow system_server { appdomain ephemeral_app }:process { getsched setsched };
 allow system_server audioserver:process { getsched setsched };
+allow system_server hal_audio:process { getsched setsched };
 allow system_server cameraserver:process { getsched setsched };
 allow system_server mediaserver:process { getsched setsched };
 allow system_server bootanim:process { getsched setsched };
@@ -132,7 +132,6 @@ allow system_server node:rawip_socket node_bind;
 allow system_server self:tun_socket create_socket_perms_no_ioctl;
 
 # Talk to init and various daemons via sockets.
-unix_socket_connect(system_server, installd, installd)
 unix_socket_connect(system_server, lmkd, lmkd)
 unix_socket_connect(system_server, mtpd, mtp)
 unix_socket_connect(system_server, netd, netd)
@@ -148,21 +147,30 @@ allow system_server surfaceflinger:unix_stream_socket { read write setopt };
 
 # Perform Binder IPC.
 binder_use(system_server)
-binder_call(system_server, hal_boot)
-binder_call(system_server, hal_light)
-binder_call(system_server, hal_memtrack)
-binder_call(system_server, hal_power)
-binder_call(system_server, hal_thermal)
-binder_call(system_server, hal_vibrator)
-binder_call(system_server, hal_vr)
-binder_call(system_server, binderservicedomain)
-binder_call(system_server, gatekeeperd)
-binder_call(system_server, fingerprintd)
 binder_call(system_server, { appdomain ephemeral_app })
+binder_call(system_server, binderservicedomain)
 binder_call(system_server, dumpstate)
+binder_call(system_server, fingerprintd)
+binder_call(system_server, gatekeeperd)
+binder_call(system_server, installd)
 binder_call(system_server, netd)
 binder_call(system_server, wificond)
 binder_service(system_server)
+
+# Perform HwBinder IPC.
+hwbinder_use(system_server)
+binder_call(system_server, hal_boot)
+binder_call(system_server, hal_contexthub)
+binder_call(system_server, hal_ir)
+binder_call(system_server, hal_light)
+binder_call(system_server, hal_memtrack)
+binder_call(system_server, hal_power)
+binder_call(system_server, hal_sensors)
+binder_call(system_server, hal_thermal)
+binder_call(system_server, hal_vibrator)
+binder_call(system_server, hal_vr)
+binder_call(system_server, hal_wifi)
+binder_call(system_server, wpa)
 
 # Ask debuggerd to dump backtraces for native stacks of interest.
 #
@@ -179,6 +187,7 @@ allow system_server {
   mediadrmserver
   mediaextractor
   mediaserver
+  mediaanalytics
   sdcardd
   surfaceflinger
 }:debuggerd dump_backtrace;
@@ -321,7 +330,11 @@ allow system_server system_app_data_file:file create_file_perms;
 # Types extracted from seapp_contexts type= fields.
 allow system_server { system_app_data_file bluetooth_data_file nfc_data_file radio_data_file shell_data_file app_data_file }:file { getattr read write append };
 
+# Access to /data/media for measuring disk usage.
+allow system_server media_rw_data_file:dir { search getattr open read };
+
 # Receive and use open /data/media files passed over binder IPC.
+# Also used for measuring disk usage.
 allow system_server media_rw_data_file:file { getattr read write append };
 
 # Relabel apk files.
@@ -374,9 +387,16 @@ set_prop(system_server, ctl_bugreport_prop)
 # cppreopt property
 set_prop(system_server, cppreopt_prop)
 
+# Collect metrics on boot time created by init
+get_prop(system_server, boottime_prop)
+
+# Read device's serial number from system properties
+get_prop(system_server, serialno_prop)
+
+# Read/write the property which keeps track of whether this is the first start of system_server
+set_prop(system_server, firstboot_prop)
+
 # Create a socket for receiving info from wpa.
-type_transition system_server wifi_data_file:sock_file system_wpa_socket;
-type_transition system_server wpa_socket:sock_file system_wpa_socket;
 allow system_server wpa_socket:dir rw_dir_perms;
 allow system_server system_wpa_socket:sock_file create_file_perms;
 
@@ -391,11 +411,8 @@ allow system_server { cache_file cache_recovery_file }:dir { relabelfrom create_
 allow system_server { cache_file cache_recovery_file }:file { relabelfrom create_file_perms };
 allow system_server { cache_file cache_recovery_file }:fifo_file create_file_perms;
 
-# Run system programs, e.g. dexopt. Needed? (b/28035297)
-allow system_server system_file:file rx_file_perms;
 allow system_server system_file:dir r_dir_perms;
 allow system_server system_file:lnk_file r_file_perms;
-auditallow system_server system_file:file execute_no_trans;
 
 # LocationManager(e.g, GPS) needs to read and write
 # to uart driver and ctrl proc entry
@@ -453,14 +470,16 @@ allow system_server sysfs_zram:dir search;
 allow system_server sysfs_zram:file r_file_perms;
 
 allow system_server audioserver_service:service_manager find;
+allow system_server batteryproperties_service:service_manager find;
 allow system_server cameraserver_service:service_manager find;
 allow system_server drmserver_service:service_manager find;
 allow system_server dumpstate_service:service_manager find;
-allow system_server batteryproperties_service:service_manager find;
-allow system_server keystore_service:service_manager find;
-allow system_server gatekeeper_service:service_manager find;
 allow system_server fingerprintd_service:service_manager find;
+allow system_server gatekeeper_service:service_manager find;
+allow system_server installd_service:service_manager find;
+allow system_server keystore_service:service_manager find;
 allow system_server mediaserver_service:service_manager find;
+allow system_server mediaanalytics_service:service_manager find;
 allow system_server mediaextractor_service:service_manager find;
 allow system_server mediacodec_service:service_manager find;
 allow system_server mediadrmserver_service:service_manager find;
@@ -544,11 +563,6 @@ allow system_server adbd:unix_stream_socket connectto;
 allow system_server adbd:fd use;
 allow system_server adbd:unix_stream_socket { getattr getopt ioctl read write shutdown };
 
-# Access to /data/media.
-# This should be removed if sdcardfs is modified to alter the secontext for its
-# accesses to the underlying FS.
-allow system_server media_rw_data_file:dir search;
-
 # Allow invoking tools like "timeout"
 allow system_server toolbox_exec:file rx_file_perms;
 
@@ -599,7 +613,7 @@ neverallow system_server { bluetooth_data_file nfc_data_file shell_data_file app
 # example, https://www.linuxprogrammingblog.com/threads-and-fork-think-twice-before-using-them
 # Prevent the addition of new file execs to stop the problem from
 # getting worse. b/28035297
-neverallow system_server { file_type -toolbox_exec -logcat_exec -system_file }:file execute_no_trans;
+neverallow system_server { file_type -toolbox_exec -logcat_exec }:file execute_no_trans;
 
 # System server should never transition to a new domain. This compliments
 # and enforces the already pre-existing PR_SET_NO_NEW_PRIVS flag.
@@ -626,4 +640,3 @@ neverallow system_server { dev_type -frp_block_device }:blk_file no_rw_file_perm
 # system_server should never use JIT functionality
 neverallow system_server self:process execmem;
 neverallow system_server ashmem_device:chr_file execute;
-neverallow system_server system_server_tmpfs:file execute;

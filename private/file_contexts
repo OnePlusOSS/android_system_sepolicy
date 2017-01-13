@@ -36,8 +36,15 @@
 
 # SELinux policy files
 /file_contexts\.bin u:object_r:rootfs:s0
+/nonplat_file_contexts u:object_r:rootfs:s0
+/plat_file_contexts u:object_r:rootfs:s0
+/mapping_sepolicy\.cil   u:object_r:rootfs:s0
+/nonplat_sepolicy\.cil   u:object_r:rootfs:s0
+/plat_sepolicy\.cil      u:object_r:rootfs:s0
 /property_contexts  u:object_r:property_contexts:s0
 /seapp_contexts     u:object_r:rootfs:s0
+/nonplat_seapp_contexts     u:object_r:rootfs:s0
+/plat_seapp_contexts     u:object_r:rootfs:s0
 /sepolicy           u:object_r:rootfs:s0
 /service_contexts   u:object_r:rootfs:s0
 
@@ -85,6 +92,7 @@
 /dev/mtp_usb		u:object_r:mtp_device:s0
 /dev/pmsg0		u:object_r:pmsg_device:s0
 /dev/pn544		u:object_r:nfc_device:s0
+/dev/port		u:object_r:port_device:s0
 /dev/ppp		u:object_r:ppp_device:s0
 /dev/ptmx		u:object_r:ptmx_device:s0
 /dev/pvrsrvkm		u:object_r:gpu_device:s0
@@ -105,7 +113,6 @@
 /dev/socket/dnsproxyd	u:object_r:dnsproxyd_socket:s0
 /dev/socket/dumpstate	u:object_r:dumpstate_socket:s0
 /dev/socket/fwmarkd	u:object_r:fwmarkd_socket:s0
-/dev/socket/installd	u:object_r:installd_socket:s0
 /dev/socket/lmkd        u:object_r:lmkd_socket:s0
 /dev/socket/logd	u:object_r:logd_socket:s0
 /dev/socket/logdr	u:object_r:logdr_socket:s0
@@ -173,6 +180,7 @@
 /system/bin/audioserver	u:object_r:audioserver_exec:s0
 /system/bin/mediadrmserver	u:object_r:mediadrmserver_exec:s0
 /system/bin/mediaserver	u:object_r:mediaserver_exec:s0
+/system/bin/mediaanalytics	u:object_r:mediaanalytics_exec:s0
 /system/bin/cameraserver	u:object_r:cameraserver_exec:s0
 /system/bin/mediaextractor	u:object_r:mediaextractor_exec:s0
 /system/bin/mediacodec	u:object_r:mediacodec_exec:s0
@@ -221,23 +229,30 @@
 /system/bin/idmap u:object_r:idmap_exec:s0
 /system/bin/update_engine        u:object_r:update_engine_exec:s0
 /system/bin/bspatch              u:object_r:update_engine_exec:s0
+/system/bin/storaged             u:object_r:storaged_exec:s0
 /system/bin/webview_zygote32     u:object_r:webview_zygote_exec:s0
 /system/bin/webview_zygote64     u:object_r:webview_zygote_exec:s0
 /system/fake-lib(64)?/libart.*   u:object_r:libart_file:s0
 /system/lib(64)?/libart.*        u:object_r:libart_file:s0
-/system/bin/hw/android\.hardware\.audio@2\.0-service          u:object_r:hal_audio_exec:s0
+/system/bin/hw/android\.hardware\.audio@2\.0-service          u:object_r:hal_audio_default_exec:s0
 /system/bin/hw/android\.hardware\.boot@1\.0-service           u:object_r:hal_boot_exec:s0
-/system/bin/hw/android\.hardware\.graphics\.allocator@2\.0-service   u:object_r:hal_graphics_allocator_exec:s0
-/system/bin/hw/android\.hardware\.graphics\.composer@2\.1-service    u:object_r:hal_graphics_composer_exec:s0
-/system/bin/hw/android\.hardware\.health@1\.0-service         u:object_r:hal_health_exec:s0
+/system/bin/hw/android\.hardware\.contexthub@1\.0-service     u:object_r:hal_contexthub_default_exec:s0
+/system/bin/hw/android\.hardware\.dumpstate@1\.0-service      u:object_r:hal_dumpstate_default_exec:s0
+/system/bin/hw/android\.hardware\.gatekeeper@1\.0-service     u:object_r:hal_gatekeeper_default_exec:s0
+/system/bin/hw/android\.hardware\.graphics\.allocator@2\.0-service   u:object_r:hal_graphics_allocator_default_exec:s0
+/system/bin/hw/android\.hardware\.graphics\.composer@2\.1-service    u:object_r:hal_graphics_composer_default_exec:s0
+/system/bin/hw/android\.hardware\.health@1\.0-service         u:object_r:hal_health_default_exec:s0
+/system/bin/hw/android\.hardware\.ir@1\.0-service             u:object_r:hal_ir_default_exec:s0
 /system/bin/hw/android\.hardware\.light@2\.0-service          u:object_r:hal_light_default_exec:s0
-/system/bin/hw/android\.hardware\.memtrack@1\.0-service       u:object_r:hal_memtrack_exec:s0
-/system/bin/hw/android\.hardware\.nfc@1\.0-service            u:object_r:hal_nfc_exec:s0
-/system/bin/hw/android\.hardware\.power@1\.0-service          u:object_r:hal_power_exec:s0
-/system/bin/hw/android\.hardware\.thermal@1\.0-service        u:object_r:hal_thermal_exec:s0
-/system/bin/hw/android\.hardware\.vibrator@1\.0-service       u:object_r:hal_vibrator_exec:s0
-/system/bin/hw/android\.hardware\.vr@1\.0-service             u:object_r:hal_vr_exec:s0
-/system/bin/hw/android\.hardware\.wifi@1\.0-service           u:object_r:hal_wifi_exec:s0
+/system/bin/hw/android\.hardware\.memtrack@1\.0-service       u:object_r:hal_memtrack_default_exec:s0
+/system/bin/hw/android\.hardware\.nfc@1\.0-service            u:object_r:hal_nfc_default_exec:s0
+/system/bin/hw/android\.hardware\.power@1\.0-service          u:object_r:hal_power_default_exec:s0
+/system/bin/hw/android\.hardware\.sensors@1\.0-service        u:object_r:hal_sensors_default_exec:s0
+/system/bin/hw/android\.hardware\.thermal@1\.0-service        u:object_r:hal_thermal_default_exec:s0
+/system/bin/hw/android\.hardware\.vibrator@1\.0-service       u:object_r:hal_vibrator_default_exec:s0
+/system/bin/hw/android\.hardware\.vr@1\.0-service             u:object_r:hal_vr_default_exec:s0
+/system/bin/hw/android\.hardware\.wifi@1\.0-service           u:object_r:hal_wifi_default_exec:s0
+/system/bin/hw/android\.hidl\.memory@1\.0-service             u:object_r:hal_allocator_exec:s0
 
 #############################
 # Vendor files
@@ -410,6 +425,7 @@
 #############################
 # debugfs files
 #
+/sys/kernel/debug/mmc0(/.*)?             u:object_r:debugfs_mmc:s0
 /sys/kernel/debug/tracing(/.*)?          u:object_r:debugfs_tracing:s0
 /sys/kernel/debug/tracing/trace_marker   u:object_r:debugfs_trace_marker:s0
 

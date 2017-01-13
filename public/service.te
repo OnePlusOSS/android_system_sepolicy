@@ -1,22 +1,25 @@
 type audioserver_service,       service_manager_type;
+type batteryproperties_service, app_api_service, service_manager_type;
 type bluetooth_service,         service_manager_type;
 type cameraserver_service,      service_manager_type;
 type default_android_service,   service_manager_type;
 type drmserver_service,         service_manager_type;
 type dumpstate_service,         service_manager_type;
-type gatekeeper_service,        app_api_service, service_manager_type;
 type fingerprintd_service,      service_manager_type;
-type batteryproperties_service, app_api_service, service_manager_type;
+type gatekeeper_service,        app_api_service, service_manager_type;
 type gpu_service,               service_manager_type;
 type inputflinger_service,      service_manager_type;
+type installd_service,          service_manager_type;
 type keystore_service,          service_manager_type;
 type mediaserver_service,       service_manager_type;
+type mediaanalytics_service,    service_manager_type;
 type mediaextractor_service,    service_manager_type;
 type mediacodec_service,        service_manager_type;
 type mediadrmserver_service,    service_manager_type;
 type netd_service,              service_manager_type;
 type nfc_service,               service_manager_type;
 type radio_service,             service_manager_type;
+type storaged_service,          service_manager_type;
 type surfaceflinger_service,    service_manager_type;
 type system_app_service,        service_manager_type;
 type update_engine_service,     service_manager_type;
@@ -46,6 +49,9 @@ type connmetrics_service, app_api_service, system_server_service, service_manage
 type consumer_ir_service, app_api_service, system_server_service, service_manager_type;
 type content_service, app_api_service, system_server_service, service_manager_type;
 type country_detector_service, app_api_service, system_server_service, service_manager_type;
+# Note: The coverage_service should only be enabled for userdebug / eng builds that were compiled
+# with EMMA_INSTRUMENT=true. We should consider locking this down in the future.
+type coverage_service, system_server_service, service_manager_type;
 type cpuinfo_service, system_api_service, system_server_service, service_manager_type;
 type dbinfo_service, system_api_service, system_server_service, service_manager_type;
 type device_policy_service, app_api_service, system_server_service, service_manager_type;

@@ -22,9 +22,6 @@ allow appdomain zygote:fd use;
 # valgrind needs mmap exec for zygote
 allow appdomain zygote_exec:file rx_file_perms;
 
-# Read system properties managed by zygote.
-allow appdomain zygote_tmpfs:file read;
-
 # Notify zygote of death;
 allow appdomain zygote:process sigchld;
 
@@ -157,6 +154,8 @@ binder_use(appdomain)
 binder_call(appdomain, binderservicedomain)
 # Perform binder IPC to other apps.
 binder_call(appdomain, appdomain)
+# Perform binder IPC to ephemeral apps.
+binder_call(appdomain, ephemeral_app)
 
 # Already connected, unnamed sockets being passed over some other IPC
 # hence no sock_file or connectto permission. This appears to be how
@@ -191,6 +190,10 @@ allow { appdomain -isolated_app } fuse:dir create_dir_perms;
 allow { appdomain -isolated_app } fuse:file create_file_perms;
 allow { appdomain -isolated_app } sdcardfs:dir create_dir_perms;
 allow { appdomain -isolated_app } sdcardfs:file create_file_perms;
+# This should be removed if sdcardfs is modified to alter the secontext for its
+# accesses to the underlying FS.
+allow { appdomain -isolated_app } media_rw_data_file:dir create_dir_perms;
+allow { appdomain -isolated_app } media_rw_data_file:file create_file_perms;
 
 # Access OBBs (vfat images) mounted by vold (b/17633509)
 # File write access allowed for FDs returned through Storage Access Framework
@@ -333,7 +336,6 @@ neverallow appdomain socket_device:sock_file write;
 
 # Unix domain sockets.
 neverallow appdomain adbd_socket:sock_file write;
-neverallow appdomain installd_socket:sock_file write;
 neverallow { appdomain -radio } rild_socket:sock_file write;
 neverallow appdomain vold_socket:sock_file write;
 neverallow appdomain zygote_socket:sock_file write;
@@ -466,3 +468,11 @@ neverallow {
   appdomain
   -shell # bugreport
 } input_device:chr_file ~getattr;
+
+# Do not allow access to Bluetooth-related system properties except for a few whitelisted domains.
+# neverallow rules for access to Bluetooth-related data files are above.
+neverallow {
+  appdomain
+  -bluetooth
+  -system_app
+} bluetooth_prop:file create_file_perms;

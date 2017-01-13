@@ -1,5 +1,6 @@
 type audio_prop, property_type, core_property_type;
-type bluetooth_prop, property_type, core_property_type;
+type boottime_prop, property_type;
+type bluetooth_prop, property_type;
 type config_prop, property_type, core_property_type;
 type cppreopt_prop, property_type, core_property_type;
 type ctl_bootanim_prop, property_type;
@@ -20,6 +21,7 @@ type dumpstate_options_prop, property_type;
 type dumpstate_prop, property_type, core_property_type;
 type ffs_prop, property_type, core_property_type;
 type fingerprint_prop, property_type, core_property_type;
+type firstboot_prop, property_type;
 type hwservicemanager_prop, property_type;
 type logd_prop, property_type, core_property_type;
 type logpersistd_logging_prop, property_type;
@@ -35,6 +37,7 @@ type powerctl_prop, property_type, core_property_type;
 type radio_prop, property_type, core_property_type;
 type restorecon_prop, property_type, core_property_type;
 type safemode_prop, property_type;
+type serialno_prop, property_type;
 type shell_prop, property_type, core_property_type;
 type system_prop, property_type, core_property_type;
 type system_radio_prop, property_type, core_property_type;
@@ -43,3 +46,41 @@ type wifi_log_prop, property_type, log_property_type;
 type wifi_prop, property_type;
 
 allow property_type tmpfs:filesystem associate;
+
+###
+### Neverallow rules
+###
+
+# core_property_type should not be used for new properties or
+# device specific properties. Properties with this attribute
+# are readable to everyone, which is overly broad and should
+# be avoided.
+# New properties should have appropriate read / write access
+# control rules written.
+
+neverallow * {
+  core_property_type
+  -audio_prop
+  -config_prop
+  -cppreopt_prop
+  -dalvik_prop
+  -debuggerd_prop
+  -debug_prop
+  -default_prop
+  -dhcp_prop
+  -dumpstate_prop
+  -ffs_prop
+  -fingerprint_prop
+  -logd_prop
+  -net_radio_prop
+  -nfc_prop
+  -pan_result_prop
+  -persist_debug_prop
+  -powerctl_prop
+  -radio_prop
+  -restorecon_prop
+  -shell_prop
+  -system_prop
+  -system_radio_prop
+  -vold_prop
+}:file no_rw_file_perms;
