@@ -23,6 +23,8 @@ type proc_timer, fs_type;
 type proc_tty_drivers, fs_type;
 type proc_uid_cputime_showstat, fs_type;
 type proc_uid_cputime_removeuid, fs_type;
+type proc_uid_io_stats, fs_type;
+type proc_uid_procstat_set, fs_type;
 type proc_zoneinfo, fs_type;
 type selinuxfs, fs_type, mlstrustedobject;
 type cgroup, fs_type, mlstrustedobject;
@@ -60,6 +62,8 @@ type debugfs, fs_type;
 type debugfs_mmc, fs_type, debugfs_type;
 type debugfs_trace_marker, fs_type, debugfs_type, mlstrustedobject;
 type debugfs_tracing, fs_type, debugfs_type;
+type debugfs_tracing_instances, fs_type, debugfs_type;
+type debugfs_wifi_tracing, fs_type, debugfs_type;
 type pstorefs, fs_type;
 type functionfs, fs_type, mlstrustedobject;
 type oemfs, fs_type, contextmount_type;
@@ -208,7 +212,7 @@ type backup_data_file, file_type, data_file_type, mlstrustedobject;
 # vary per device, so this type is used in per
 # device policy
 type bluetooth_efs_file, file_type;
-# Type for fingerprint template file.
+# Type for fingerprint template file
 type fingerprintd_data_file, file_type, data_file_type;
 # Type for appfuse file.
 type app_fuse_file, file_type, data_file_type, mlstrustedobject;
@@ -234,6 +238,8 @@ type rild_socket, file_type;
 type rild_debug_socket, file_type;
 type system_wpa_socket, file_type;
 type system_ndebug_socket, file_type;
+type tombstoned_crash_socket, file_type, mlstrustedobject;
+type tombstoned_intercept_socket, file_type;
 type uncrypt_socket, file_type;
 type vold_socket, file_type;
 type webview_zygote_socket, file_type;

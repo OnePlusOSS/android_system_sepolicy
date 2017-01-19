@@ -252,8 +252,7 @@ allow { appdomain -isolated_app } hal_graphics_allocator:fd use;
 allow appdomain proc_meminfo:file r_file_perms;
 
 # For app fuse.
-allow appdomain app_fuse_file:dir rw_dir_perms;
-allow appdomain app_fuse_file:file rw_file_perms;
+allow appdomain app_fuse_file:file { getattr read append write };
 
 ###
 ### CTS-specific rules
@@ -354,10 +353,12 @@ neverallow appdomain { domain -appdomain }:process
     { sigkill sigstop signal };
 
 # Transition to a non-app domain.
-# Exception for the shell domain and the su domain, can transition to runas,
-# etc.
+# Exception for the shell and su domains, can transition to runas, etc.
+# Exception for crash_dump.
+neverallow { appdomain -shell userdebug_or_eng(`-su') } { domain -appdomain -crash_dump }:process
+    { transition };
 neverallow { appdomain -shell userdebug_or_eng(`-su') } { domain -appdomain }:process
-    { transition dyntransition };
+    { dyntransition };
 
 # Write to rootfs.
 neverallow appdomain rootfs:dir_file_class_set

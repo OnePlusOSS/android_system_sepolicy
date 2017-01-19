@@ -1,7 +1,6 @@
 # Device types
 type device, dev_type, fs_type;
 type alarm_device, dev_type, mlstrustedobject;
-type adb_device, dev_type;
 type ashmem_device, dev_type, mlstrustedobject;
 type audio_device, dev_type;
 type audio_timer_device, dev_type;
@@ -11,6 +10,7 @@ type hwbinder_device, dev_type, mlstrustedobject;
 type block_device, dev_type;
 type camera_device, dev_type;
 type dm_device, dev_type;
+type keychord_device, dev_type;
 type loop_device, dev_type;
 type pmsg_device, dev_type, mlstrustedobject;
 type radio_device, dev_type;

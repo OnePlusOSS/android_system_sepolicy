@@ -116,6 +116,25 @@ typeattribute $1 bluetoothdomain;
 ')
 
 #####################################
+# hal_impl_domain(domain[, hal_type_attr])
+# Allow a base set of permissions required for a domain to host a
+# HAL implementation.
+#
+# Optionally, the type of the HAL can be specified as the second
+# argument. This is useful for HALs which may have multiple
+# implementations. Attributes are used to group the various
+# implementations of such HALs.
+#
+# For example, default implementation of Foo HAL:
+#   type hal_foo_default, domain;
+#   hal_impl_domain(hal_foo_default, hal_foo)
+#
+define(`hal_impl_domain', `
+typeattribute $1 haldomain;
+ifelse($2, `', `', `typeattribute $1 $2;')
+')
+
+#####################################
 # unix_socket_connect(clientdomain, socket, serverdomain)
 # Allow a local socket connection from clientdomain via
 # socket to serverdomain.
@@ -228,7 +247,7 @@ typeattribute $1 binderservicedomain;
 define(`hwallocator_use', `
 # Call into the allocator hal
 binder_call($1, hal_allocator);
-'')
+')
 
 #####################################
 # wakelock_use(domain)

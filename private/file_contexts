@@ -46,7 +46,8 @@
 /nonplat_seapp_contexts     u:object_r:rootfs:s0
 /plat_seapp_contexts     u:object_r:rootfs:s0
 /sepolicy           u:object_r:rootfs:s0
-/service_contexts   u:object_r:rootfs:s0
+/plat_service_contexts   u:object_r:rootfs:s0
+/nonplat_service_contexts   u:object_r:rootfs:s0
 
 ##########################
 # Devices
@@ -58,7 +59,6 @@
 /dev/adf-interface[0-9]*\.[0-9]*	u:object_r:graphics_device:s0
 /dev/adf-overlay-engine[0-9]*\.[0-9]*	u:object_r:graphics_device:s0
 /dev/alarm		u:object_r:alarm_device:s0
-/dev/android_adb.*	u:object_r:adb_device:s0
 /dev/ashmem		u:object_r:ashmem_device:s0
 /dev/audio.*		u:object_r:audio_device:s0
 /dev/binder		u:object_r:binder_device:s0
@@ -84,6 +84,7 @@
 /dev/input(/.*)		u:object_r:input_device:s0
 /dev/iio:device[0-9]+   u:object_r:iio_device:s0
 /dev/ion		u:object_r:ion_device:s0
+/dev/keychord   u:object_r:keychord_device:s0
 /dev/kmem		u:object_r:kmem_device:s0
 /dev/log(/.*)?		u:object_r:log_device:s0
 /dev/mem		u:object_r:kmem_device:s0
@@ -125,6 +126,8 @@
 /dev/socket/racoon	u:object_r:racoon_socket:s0
 /dev/socket/rild	u:object_r:rild_socket:s0
 /dev/socket/rild-debug	u:object_r:rild_debug_socket:s0
+/dev/socket/tombstoned_crash u:object_r:tombstoned_crash_socket:s0
+/dev/socket/tombstoned_intercept u:object_r:tombstoned_intercept_socket:s0
 /dev/socket/uncrypt	u:object_r:uncrypt_socket:s0
 /dev/socket/vold	u:object_r:vold_socket:s0
 /dev/socket/webview_zygote	u:object_r:webview_zygote_socket:s0
@@ -191,8 +194,9 @@
 /system/bin/keystore	u:object_r:keystore_exec:s0
 /system/bin/fingerprintd u:object_r:fingerprintd_exec:s0
 /system/bin/gatekeeperd u:object_r:gatekeeperd_exec:s0
-/system/bin/debuggerd	u:object_r:debuggerd_exec:s0
-/system/bin/debuggerd64	u:object_r:debuggerd_exec:s0
+/system/bin/crash_dump32 u:object_r:crash_dump_exec:s0
+/system/bin/crash_dump64 u:object_r:crash_dump_exec:s0
+/system/bin/tombstoned u:object_r:tombstoned_exec:s0
 /system/bin/wpa_supplicant	u:object_r:wpa_exec:s0
 /system/bin/recovery-persist     u:object_r:recovery_persist_exec:s0
 /system/bin/recovery-refresh     u:object_r:recovery_refresh_exec:s0
@@ -235,10 +239,14 @@
 /system/fake-lib(64)?/libart.*   u:object_r:libart_file:s0
 /system/lib(64)?/libart.*        u:object_r:libart_file:s0
 /system/bin/hw/android\.hardware\.audio@2\.0-service          u:object_r:hal_audio_default_exec:s0
+/system/bin/hw/android\.hardware\.bluetooth@1\.0-service      u:object_r:hal_bluetooth_default_exec:s0
+/system/bin/hw/android\.hardware\.camera\.provider@2\.4-service          u:object_r:hal_camera_default_exec:s0
 /system/bin/hw/android\.hardware\.boot@1\.0-service           u:object_r:hal_boot_exec:s0
 /system/bin/hw/android\.hardware\.contexthub@1\.0-service     u:object_r:hal_contexthub_default_exec:s0
+/system/bin/hw/android\.hardware\.biometrics\.fingerprint@2\.1-service u:object_r:hal_fingerprint_default_exec:s0
 /system/bin/hw/android\.hardware\.dumpstate@1\.0-service      u:object_r:hal_dumpstate_default_exec:s0
 /system/bin/hw/android\.hardware\.gatekeeper@1\.0-service     u:object_r:hal_gatekeeper_default_exec:s0
+/system/bin/hw/android\.hardware\.gnss@1\.0-service           u:object_r:hal_gnss_default_exec:s0
 /system/bin/hw/android\.hardware\.graphics\.allocator@2\.0-service   u:object_r:hal_graphics_allocator_default_exec:s0
 /system/bin/hw/android\.hardware\.graphics\.composer@2\.1-service    u:object_r:hal_graphics_composer_default_exec:s0
 /system/bin/hw/android\.hardware\.health@1\.0-service         u:object_r:hal_health_default_exec:s0
@@ -300,6 +308,7 @@
 /data/media(/.*)?	u:object_r:media_rw_data_file:s0
 /data/mediadrm(/.*)?	u:object_r:media_data_file:s0
 /data/nativetest(/.*)?	u:object_r:nativetest_data_file:s0
+/data/nativetest64(/.*)?	u:object_r:nativetest_data_file:s0
 /data/property(/.*)?	u:object_r:property_data_file:s0
 /data/preloads(/.*)?	u:object_r:preloads_data_file:s0
 
@@ -425,9 +434,13 @@
 #############################
 # debugfs files
 #
-/sys/kernel/debug/mmc0(/.*)?             u:object_r:debugfs_mmc:s0
-/sys/kernel/debug/tracing(/.*)?          u:object_r:debugfs_tracing:s0
-/sys/kernel/debug/tracing/trace_marker   u:object_r:debugfs_trace_marker:s0
+/sys/kernel/debug/mmc0(/.*)?                            u:object_r:debugfs_mmc:s0
+/sys/kernel/debug/tracing(/.*)?				u:object_r:debugfs_tracing:s0
+/sys/kernel/debug/tracing/trace_marker			u:object_r:debugfs_trace_marker:s0
+/sys/kernel/debug/tracing/instances(/.*)?		u:object_r:debugfs_tracing_instances:s0
+/sys/kernel/debug/tracing/instances/wifi/free_buffer	u:object_r:debugfs_wifi_tracing:s0
+/sys/kernel/debug/tracing/instances/wifi/trace		u:object_r:debugfs_wifi_tracing:s0
+/sys/kernel/debug/tracing/instances/wifi/tracing_on	u:object_r:debugfs_wifi_tracing:s0
 
 #############################
 # asec containers

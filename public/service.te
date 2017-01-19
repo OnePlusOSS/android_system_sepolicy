@@ -6,6 +6,7 @@ type default_android_service,   service_manager_type;
 type drmserver_service,         service_manager_type;
 type dumpstate_service,         service_manager_type;
 type fingerprintd_service,      service_manager_type;
+type hal_fingerprint_service,   service_manager_type;
 type gatekeeper_service,        app_api_service, service_manager_type;
 type gpu_service,               service_manager_type;
 type inputflinger_service,      service_manager_type;
@@ -113,6 +114,7 @@ type servicediscovery_service, app_api_service, system_server_service, service_m
 type settings_service, app_api_service, system_server_service, service_manager_type;
 type shortcut_service, app_api_service, system_server_service, service_manager_type;
 type statusbar_service, app_api_service, system_server_service, service_manager_type;
+type storagestats_service, app_api_service, system_server_service, service_manager_type;
 type task_service, system_server_service, service_manager_type;
 type textservices_service, app_api_service, system_server_service, service_manager_type;
 type telecom_service, app_api_service, system_server_service, service_manager_type;
