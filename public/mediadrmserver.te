@@ -10,6 +10,14 @@ binder_call(mediadrmserver, binderservicedomain)
 binder_call(mediadrmserver, appdomain)
 binder_service(mediadrmserver)
 
+add_service(mediadrmserver, mediadrmserver_service)
+allow mediadrmserver mediaserver_service:service_manager find;
+allow mediadrmserver mediametrics_service:service_manager find;
+allow mediadrmserver processinfo_service:service_manager find;
+allow mediadrmserver surfaceflinger_service:service_manager find;
+
+### Rules needed when DRM HAL runs inside mediadrmserver process.
+### These rules should eventually be granted only when needed.
 # Required by Widevine DRM (b/22990512)
 allow mediadrmserver self:process execmem;
 
@@ -45,18 +53,18 @@ allow mediadrmserver sysfs:file r_file_perms;
 # Connect to tee service.
 allow mediadrmserver tee:unix_stream_socket connectto;
 
-allow mediadrmserver mediadrmserver_service:service_manager { add find };
-allow mediadrmserver mediaserver_service:service_manager { add find };
-allow mediadrmserver mediaanalytics_service:service_manager find;
-allow mediadrmserver processinfo_service:service_manager find;
-allow mediadrmserver surfaceflinger_service:service_manager find;
-
 # only allow unprivileged socket ioctl commands
 allowxperm mediadrmserver self:{ rawip_socket tcp_socket udp_socket }
   ioctl { unpriv_sock_ioctls unpriv_tty_ioctls };
 
 # Permit reading device's serial number from system properties
 get_prop(mediadrmserver, serialno_prop)
+###
+
+### Rules needed when DRM HAL runs outside of mediadrmserver process.
+### These rules should eventually be granted only when needed.
+hwbinder_use(mediadrmserver)
+###
 
 ###
 ### neverallow rules

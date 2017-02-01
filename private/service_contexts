@@ -47,6 +47,7 @@ dropbox                                   u:object_r:dropbox_service:s0
 dumpstate                                 u:object_r:dumpstate_service:s0
 ethernet                                  u:object_r:ethernet_service:s0
 fingerprint                               u:object_r:fingerprint_service:s0
+font                                      u:object_r:font_service:s0
 android.hardware.fingerprint.IFingerprintDaemon u:object_r:fingerprintd_service:s0
 gfxinfo                                   u:object_r:gfxinfo_service:s0
 graphicsstats                             u:object_r:graphicsstats_service:s0
@@ -77,7 +78,7 @@ media.camera                              u:object_r:cameraserver_service:s0
 media.camera.proxy                        u:object_r:cameraproxy_service:s0
 media.log                                 u:object_r:audioserver_service:s0
 media.player                              u:object_r:mediaserver_service:s0
-media.analytics                           u:object_r:mediaanalytics_service:s0
+media.metrics                             u:object_r:mediametrics_service:s0
 media.extractor                           u:object_r:mediaextractor_service:s0
 media.codec                               u:object_r:mediacodec_service:s0
 media.resource_manager                    u:object_r:mediaserver_service:s0

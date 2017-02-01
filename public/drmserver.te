@@ -9,7 +9,7 @@ net_domain(drmserver)
 # Perform Binder IPC to system server.
 binder_use(drmserver)
 binder_call(drmserver, system_server)
-binder_call(drmserver, { appdomain ephemeral_app })
+binder_call(drmserver, appdomain)
 binder_service(drmserver)
 # Inherit or receive open files from system_server.
 allow drmserver system_server:fd use;
@@ -50,7 +50,7 @@ allow drmserver radio_data_file:file { read getattr };
 allow drmserver oemfs:dir search;
 allow drmserver oemfs:file r_file_perms;
 
-allow drmserver drmserver_service:service_manager { add find };
+add_service(drmserver, drmserver_service)
 allow drmserver permission_service:service_manager find;
 
 selinux_check_access(drmserver)

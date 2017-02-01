@@ -49,7 +49,7 @@ allow dumpstate pstorefs:file r_file_perms;
 allow dumpstate domain:process getattr;
 
 # Signal java processes to dump their stack
-allow dumpstate { appdomain ephemeral_app system_server }:process signal;
+allow dumpstate { appdomain system_server }:process signal;
 
 # Signal native processes to dump their stack.
 # This list comes from native_processes_to_dump in dumpstate/utils.c
@@ -85,10 +85,11 @@ r_dir_file(dumpstate, cgroup)
 
 # Allow dumpstate to make binder calls to any binder service
 binder_call(dumpstate, binderservicedomain)
-binder_call(dumpstate, { appdomain ephemeral_app netd wificond })
+binder_call(dumpstate, { appdomain netd wificond })
 
 # Vibrate the device after we are done collecting the bugreport
 # For binderized mode:
+hwbinder_use(dumpstate)
 binder_call(dumpstate, hal_dumpstate)
 binder_call(dumpstate, hal_vibrator)
 binder_call(dumpstate, hwservicemanager)
@@ -188,17 +189,14 @@ allow dumpstate proc_interrupts:file r_file_perms;
 allow dumpstate proc_zoneinfo:file r_file_perms;
 
 # Create a service for talking back to system_server
-allow dumpstate dumpstate_service:service_manager add;
+add_service(dumpstate, dumpstate_service)
 
 ###
 ### neverallow rules
 ###
 
-# only dumpstate can add the dumpstate service
-neverallow { domain -dumpstate } dumpstate_service:service_manager add;
-
-# only system_server and shell can find the dumpstate service
-neverallow { domain -system_server -shell } dumpstate_service:service_manager find;
+# only system_server, dumpstate and shell can find the dumpstate service
+neverallow { domain -system_server -shell -dumpstate } dumpstate_service:service_manager find;
 
 # Dumpstate should not be writing to any generically labeled sysfs files.
 # Create a specific label for the file type

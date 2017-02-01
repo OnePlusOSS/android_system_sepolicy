@@ -217,6 +217,12 @@ allow hwservicemanager $1:binder { call transfer };
 allow hwservicemanager $1:dir search;
 allow hwservicemanager $1:file { read open };
 allow hwservicemanager $1:process getattr;
+# TODO(b/34274385): hals wait for data to be mounted so they can
+# start only if persist.hal.binderization is enabled. (for dogfood
+# stability). getService must also check for data to be mounted
+# if the vintf promises the hal will be registered over hwbinder.
+get_prop($1, hal_binderization_prop)
+get_prop($1, vold_prop)
 # rw access to /dev/hwbinder and /dev/ashmem is presently granted to
 # all domains in domain.te.
 ')
@@ -369,6 +375,16 @@ define(`use_drmservice', `
   allow drmserver $1:dir search;
   allow drmserver $1:file { read open };
   allow drmserver $1:process getattr;
+')
+
+###########################################
+# add_service(domain, service)
+# Ability for domain to add a service to service_manager
+# and find it. It also creates a neverallow preventing
+# others from adding it.
+define(`add_service', `
+  allow $1 $2:service_manager { add find };
+  neverallow { domain -$1 } $2:service_manager add;
 ')
 
 ##########################################

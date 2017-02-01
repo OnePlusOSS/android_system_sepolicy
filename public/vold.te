@@ -64,8 +64,8 @@ allow vold self:capability { net_admin dac_override mknod sys_admin chown fowner
 allow vold self:netlink_kobject_uevent_socket create_socket_perms_no_ioctl;
 allow vold app_data_file:dir search;
 allow vold app_data_file:file rw_file_perms;
-allow vold loop_device:blk_file create_file_perms;
-allow vold vold_device:blk_file create_file_perms;
+allow vold loop_device:blk_file { create setattr unlink rw_file_perms };
+allow vold vold_device:blk_file { create setattr unlink rw_file_perms };
 allow vold dm_device:chr_file rw_file_perms;
 allow vold dm_device:blk_file rw_file_perms;
 # For vold Process::killProcessesWithOpenFiles function.
@@ -130,6 +130,8 @@ binder_use(vold)
 binder_call(vold, healthd)
 
 # talk to keymaster
+binder_call(vold, hwservicemanager)
+binder_call(vold, hal_keymaster)
 allow vold tee_device:chr_file rw_file_perms;
 
 # Access userdata block device.

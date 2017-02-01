@@ -22,7 +22,7 @@ userdebug_or_eng(`
 
 binder_use(mediaserver)
 binder_call(mediaserver, binderservicedomain)
-binder_call(mediaserver, { appdomain ephemeral_app })
+binder_call(mediaserver, appdomain)
 binder_service(mediaserver)
 
 allow mediaserver media_data_file:dir create_dir_perms;
@@ -48,7 +48,7 @@ allow mediaserver ringtone_file:file { read getattr };
 allow mediaserver radio_data_file:file { read getattr };
 
 # Use pipes passed over Binder from app domains.
-allow mediaserver { appdomain ephemeral_app }:fifo_file { getattr read write };
+allow mediaserver appdomain:fifo_file { getattr read write };
 
 allow mediaserver rpmsg_device:chr_file rw_file_perms;
 
@@ -78,6 +78,7 @@ unix_socket_connect(mediaserver, bluetooth, bluetooth)
 # Connect to tee service.
 allow mediaserver tee:unix_stream_socket connectto;
 
+add_service(mediaserver, mediaserver_service)
 allow mediaserver activity_service:service_manager find;
 allow mediaserver appops_service:service_manager find;
 allow mediaserver audioserver_service:service_manager find;
@@ -86,14 +87,16 @@ allow mediaserver batterystats_service:service_manager find;
 allow mediaserver drmserver_service:service_manager find;
 allow mediaserver mediaextractor_service:service_manager find;
 allow mediaserver mediacodec_service:service_manager find;
-allow mediaserver mediaserver_service:service_manager { add find };
-allow mediaserver mediaanalytics_service:service_manager find;
+allow mediaserver mediametrics_service:service_manager find;
 allow mediaserver media_session_service:service_manager find;
 allow mediaserver permission_service:service_manager find;
 allow mediaserver power_service:service_manager find;
 allow mediaserver processinfo_service:service_manager find;
 allow mediaserver scheduling_policy_service:service_manager find;
 allow mediaserver surfaceflinger_service:service_manager find;
+
+# for ModDrm/MediaPlayer
+allow mediaserver mediadrmserver_service:service_manager find;
 
 # /oem access
 allow mediaserver oemfs:dir search;

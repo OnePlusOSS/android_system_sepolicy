@@ -87,10 +87,10 @@ allow system_server self:socket create_socket_perms_no_ioctl;
 allow system_server self:netlink_route_socket nlmsg_write;
 
 # Kill apps.
-allow system_server { appdomain ephemeral_app }:process { sigkill signal };
+allow system_server appdomain:process { sigkill signal };
 
 # Set scheduling info for apps.
-allow system_server { appdomain ephemeral_app }:process { getsched setsched };
+allow system_server appdomain:process { getsched setsched };
 allow system_server audioserver:process { getsched setsched };
 allow system_server hal_audio:process { getsched setsched };
 allow system_server cameraserver:process { getsched setsched };
@@ -151,10 +151,11 @@ allow system_server surfaceflinger:unix_stream_socket { read write setopt };
 
 # Perform Binder IPC.
 binder_use(system_server)
-binder_call(system_server, { appdomain ephemeral_app })
+binder_call(system_server, appdomain)
 binder_call(system_server, binderservicedomain)
 binder_call(system_server, dumpstate)
 binder_call(system_server, fingerprintd)
+binder_call(system_server, hal_fingerprint)
 binder_call(system_server, gatekeeperd)
 binder_call(system_server, installd)
 binder_call(system_server, netd)
@@ -175,9 +176,11 @@ binder_call(system_server, hal_memtrack)
 binder_call(system_server, hal_power)
 binder_call(system_server, hal_sensors)
 binder_call(system_server, hal_thermal)
+binder_call(system_server, hal_usb)
 binder_call(system_server, hal_vibrator)
 binder_call(system_server, hal_vr)
 binder_call(system_server, hal_wifi)
+binder_call(system_server, hal_drm)
 binder_call(system_server, wpa)
 
 # Talk to tombstoned to get ANR traces.
@@ -196,7 +199,7 @@ allow system_server {
   mediadrmserver
   mediaextractor
   mediaserver
-  mediaanalytics
+  mediametrics
   sdcardd
   surfaceflinger
 }:process { signal };
@@ -428,8 +431,8 @@ allow system_server system_file:lnk_file r_file_perms;
 allow system_server gps_control:file rw_file_perms;
 
 # Allow system_server to use app-created sockets and pipes.
-allow system_server { appdomain ephemeral_app }:{ tcp_socket udp_socket } { getattr getopt setopt read write shutdown };
-allow system_server { appdomain ephemeral_app }:{ fifo_file unix_stream_socket } { getattr read write };
+allow system_server appdomain:{ tcp_socket udp_socket } { getattr getopt setopt read write shutdown };
+allow system_server appdomain:{ fifo_file unix_stream_socket } { getattr read write };
 
 # Allow abstract socket connection
 allow system_server rild:unix_stream_socket connectto;
@@ -478,6 +481,7 @@ allow system_server pstorefs:file r_file_perms;
 allow system_server sysfs_zram:dir search;
 allow system_server sysfs_zram:file r_file_perms;
 
+add_service(system_server, system_server_service);
 allow system_server audioserver_service:service_manager find;
 allow system_server batteryproperties_service:service_manager find;
 allow system_server cameraserver_service:service_manager find;
@@ -489,15 +493,15 @@ allow system_server gatekeeper_service:service_manager find;
 allow system_server installd_service:service_manager find;
 allow system_server keystore_service:service_manager find;
 allow system_server mediaserver_service:service_manager find;
-allow system_server mediaanalytics_service:service_manager find;
+allow system_server mediametrics_service:service_manager find;
 allow system_server mediaextractor_service:service_manager find;
 allow system_server mediacodec_service:service_manager find;
 allow system_server mediadrmserver_service:service_manager find;
 allow system_server netd_service:service_manager find;
 allow system_server nfc_service:service_manager find;
 allow system_server radio_service:service_manager find;
-allow system_server system_server_service:service_manager { add find };
 allow system_server surfaceflinger_service:service_manager find;
+allow system_server wificond_service:service_manager find;
 
 allow system_server keystore:keystore_key {
 	get_state
@@ -603,6 +607,13 @@ r_dir_file(system_server, sysfs_type)
 
 # Allow system_server to make binder calls to hwservicemanager
 binder_call(system_server, hwservicemanager)
+
+### Rules needed when Light HAL runs inside system_server process.
+### These rules should eventually be granted only when needed.
+allow system_server sysfs_leds:lnk_file read;
+allow system_server sysfs_leds:file rw_file_perms;
+allow system_server sysfs_leds:dir r_dir_perms;
+###
 
 userdebug_or_eng(`
   # Allow WifiService to start, stop, and read wifi-specific trace events.

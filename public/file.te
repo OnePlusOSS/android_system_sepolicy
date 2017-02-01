@@ -32,6 +32,7 @@ type sysfs, fs_type, sysfs_type, mlstrustedobject;
 type sysfs_uio, sysfs_type, fs_type;
 type sysfs_batteryinfo, fs_type, sysfs_type;
 type sysfs_bluetooth_writable, fs_type, sysfs_type, mlstrustedobject;
+type sysfs_leds, fs_type, sysfs_type;
 type sysfs_hwrandom, fs_type, sysfs_type;
 type sysfs_nfc_power_writable, fs_type, sysfs_type, mlstrustedobject;
 type sysfs_wake_lock, fs_type, sysfs_type;
@@ -95,7 +96,7 @@ type adb_data_file, file_type, data_file_type;
 # /data/anr - ANR traces
 type anr_data_file, file_type, data_file_type, mlstrustedobject;
 # /data/tombstones - core dumps
-type tombstone_data_file, file_type, data_file_type;
+type tombstone_data_file, file_type, data_file_type, mlstrustedobject;
 # /data/app - user-installed apps
 type apk_data_file, file_type, data_file_type;
 type apk_tmp_file, file_type, data_file_type, mlstrustedobject;
