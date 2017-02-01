@@ -144,3 +144,8 @@ attribute hal_usb;
 attribute hal_vibrator;
 attribute hal_vr;
 attribute hal_wifi;
+
+
+
+# Domain type used for debugfs access
+attribute qti_debugfs_domain;
