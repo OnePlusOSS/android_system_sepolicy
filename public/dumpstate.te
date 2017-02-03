@@ -114,7 +114,6 @@ allow dumpstate zygote_exec:file rx_file_perms;
 allow dumpstate ashmem_device:chr_file execute;
 allow dumpstate self:process execmem;
 # For art.
-allow dumpstate libart_file:file { r_file_perms execute };
 allow dumpstate dalvikcache_data_file:dir { search getattr };
 allow dumpstate dalvikcache_data_file:file { r_file_perms execute };
 allow dumpstate dalvikcache_data_file:lnk_file r_file_perms;
@@ -130,6 +129,7 @@ allow dumpstate gpu_device:chr_file rw_file_perms;
 # logd access
 read_logd(dumpstate)
 control_logd(dumpstate)
+read_runtime_log_tags(dumpstate)
 
 # Read /proc/net
 allow dumpstate proc_net:file r_file_perms;
