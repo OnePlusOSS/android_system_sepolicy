@@ -304,10 +304,6 @@
 /data/app/vmdl[^/]+\.tmp/oat(/.*)?           u:object_r:dalvikcache_data_file:s0
 /data/app-private(/.*)?               u:object_r:apk_private_data_file:s0
 /data/app-private/vmdl.*\.tmp(/.*)?   u:object_r:apk_private_tmp_file:s0
-/data/app-ephemeral(/.*)?             u:object_r:ephemeral_apk_data_file:s0
-/data/app-ephemeral/[^/]+/oat(/.*)?   u:object_r:dalvikcache_data_file:s0
-/data/app-ephemeral/vmdl[^/]+\.tmp(/.*)?           u:object_r:ephemeral_apk_tmp_file:s0
-/data/app-ephemeral/vmdl[^/]+\.tmp/oat(/.*)?           u:object_r:dalvikcache_data_file:s0
 /data/tombstones(/.*)?	u:object_r:tombstone_data_file:s0
 /data/local/tmp(/.*)?	u:object_r:shell_data_file:s0
 /data/media(/.*)?	u:object_r:media_rw_data_file:s0
@@ -338,6 +334,7 @@
 /data/misc/logd(/.*)?           u:object_r:misc_logd_file:s0
 /data/misc/media(/.*)?          u:object_r:media_data_file:s0
 /data/misc/net(/.*)?            u:object_r:net_data_file:s0
+/data/misc/reboot(/.*)?         u:object_r:reboot_data_file:s0
 /data/misc/recovery(/.*)?       u:object_r:recovery_data_file:s0
 /data/misc/shared_relro(/.*)?   u:object_r:shared_relro_file:s0
 /data/misc/sms(/.*)?            u:object_r:radio_data_file:s0
