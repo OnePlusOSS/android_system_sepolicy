@@ -124,6 +124,7 @@
 /dev/socket/mdnsd	u:object_r:mdnsd_socket:s0
 /dev/socket/mtpd	u:object_r:mtpd_socket:s0
 /dev/socket/netd	u:object_r:netd_socket:s0
+/dev/socket/pdx(/.*)?	u:object_r:pdx_socket:s0
 /dev/socket/property_service	u:object_r:property_socket:s0
 /dev/socket/racoon	u:object_r:racoon_socket:s0
 /dev/socket/rild	u:object_r:rild_socket:s0
@@ -176,8 +177,13 @@
 /system/bin/servicemanager	u:object_r:servicemanager_exec:s0
 /system/bin/hwservicemanager	u:object_r:hwservicemanager_exec:s0
 /system/bin/surfaceflinger	u:object_r:surfaceflinger_exec:s0
+/system/bin/bufferhubd	u:object_r:bufferhubd_exec:s0
+/system/bin/performanced	u:object_r:performanced_exec:s0
+/system/bin/sensord	u:object_r:sensord_exec:s0
 /system/bin/drmserver	u:object_r:drmserver_exec:s0
 /system/bin/dumpstate   u:object_r:dumpstate_exec:s0
+/system/bin/incident   u:object_r:incident_exec:s0
+/system/bin/incidentd   u:object_r:incidentd_exec:s0
 /system/bin/vold	u:object_r:vold_exec:s0
 /system/bin/netd	u:object_r:netd_exec:s0
 /system/bin/wificond	u:object_r:wificond_exec:s0
@@ -239,32 +245,8 @@
 /system/bin/storaged             u:object_r:storaged_exec:s0
 /system/bin/webview_zygote32     u:object_r:webview_zygote_exec:s0
 /system/bin/webview_zygote64     u:object_r:webview_zygote_exec:s0
-/system/bin/hw/android\.hardware\.audio@2\.0-service          u:object_r:hal_audio_default_exec:s0
-/system/bin/hw/android\.hardware\.biometrics\.fingerprint@2\.1-service u:object_r:hal_fingerprint_default_exec:s0
+/system/bin/virtual_touchpad     u:object_r:virtual_touchpad_exec:s0
 /system/bin/hw/android\.hardware\.bluetooth@1\.0-service      u:object_r:hal_bluetooth_default_exec:s0
-/system/bin/hw/android\.hardware\.boot@1\.0-service           u:object_r:hal_boot_exec:s0
-/system/bin/hw/android\.hardware\.camera\.provider@2\.4-service          u:object_r:hal_camera_default_exec:s0
-/system/bin/hw/android\.hardware\.configstore@1\.0-service    u:object_r:hal_configstore_default_exec:s0
-/system/bin/hw/android\.hardware\.contexthub@1\.0-service     u:object_r:hal_contexthub_default_exec:s0
-/system/bin/hw/android\.hardware\.drm@1\.0-service            u:object_r:hal_drm_default_exec:s0
-/system/bin/hw/android\.hardware\.dumpstate@1\.0-service      u:object_r:hal_dumpstate_default_exec:s0
-/system/bin/hw/android\.hardware\.gatekeeper@1\.0-service     u:object_r:hal_gatekeeper_default_exec:s0
-/system/bin/hw/android\.hardware\.gnss@1\.0-service           u:object_r:hal_gnss_default_exec:s0
-/system/bin/hw/android\.hardware\.graphics\.allocator@2\.0-service   u:object_r:hal_graphics_allocator_default_exec:s0
-/system/bin/hw/android\.hardware\.graphics\.composer@2\.1-service    u:object_r:hal_graphics_composer_default_exec:s0
-/system/bin/hw/android\.hardware\.health@1\.0-service         u:object_r:hal_health_default_exec:s0
-/system/bin/hw/android\.hardware\.ir@1\.0-service             u:object_r:hal_ir_default_exec:s0
-/system/bin/hw/android\.hardware\.keymaster@3\.0-service      u:object_r:hal_keymaster_default_exec:s0
-/system/bin/hw/android\.hardware\.light@2\.0-service          u:object_r:hal_light_default_exec:s0
-/system/bin/hw/android\.hardware\.memtrack@1\.0-service       u:object_r:hal_memtrack_default_exec:s0
-/system/bin/hw/android\.hardware\.nfc@1\.0-service            u:object_r:hal_nfc_default_exec:s0
-/system/bin/hw/android\.hardware\.power@1\.0-service          u:object_r:hal_power_default_exec:s0
-/system/bin/hw/android\.hardware\.sensors@1\.0-service        u:object_r:hal_sensors_default_exec:s0
-/system/bin/hw/android\.hardware\.thermal@1\.0-service        u:object_r:hal_thermal_default_exec:s0
-/system/bin/hw/android\.hardware\.usb@1\.0-service            u:object_r:hal_usb_default_exec:s0
-/system/bin/hw/android\.hardware\.vibrator@1\.0-service       u:object_r:hal_vibrator_default_exec:s0
-/system/bin/hw/android\.hardware\.vr@1\.0-service             u:object_r:hal_vr_default_exec:s0
-/system/bin/hw/android\.hardware\.wifi@1\.0-service           u:object_r:hal_wifi_default_exec:s0
 /system/bin/hw/android\.hidl\.memory@1\.0-service             u:object_r:hal_allocator_exec:s0
 
 #############################
@@ -329,6 +311,7 @@
 /data/misc/dhcp(/.*)?           u:object_r:dhcp_data_file:s0
 /data/misc/dhcp-6.8.2(/.*)?     u:object_r:dhcp_data_file:s0
 /data/misc/gatekeeper(/.*)?     u:object_r:gatekeeper_data_file:s0
+/data/misc/incidents(/.*)?	    u:object_r:incident_data_file:s0
 /data/misc/keychain(/.*)?       u:object_r:keychain_data_file:s0
 /data/misc/keystore(/.*)?       u:object_r:keystore_data_file:s0
 /data/misc/logd(/.*)?           u:object_r:misc_logd_file:s0
@@ -438,12 +421,39 @@
 # debugfs files
 #
 /sys/kernel/debug/mmc0(/.*)?                            u:object_r:debugfs_mmc:s0
-/sys/kernel(/debug)?/tracing(/.*)?			u:object_r:debugfs_tracing:s0
-/sys/kernel(/debug)?/tracing/trace_marker		u:object_r:debugfs_trace_marker:s0
-/sys/kernel(/debug)?/tracing/instances(/.*)?		u:object_r:debugfs_tracing_instances:s0
-/sys/kernel(/debug)?/tracing/instances/wifi/free_buffer	u:object_r:debugfs_wifi_tracing:s0
-/sys/kernel(/debug)?/tracing/instances/wifi/trace	u:object_r:debugfs_wifi_tracing:s0
-/sys/kernel(/debug)?/tracing/instances/wifi/tracing_on	u:object_r:debugfs_wifi_tracing:s0
+
+#############################
+# tracefs files
+#
+/sys/kernel(/debug)?/tracing/buffer_size_kb                                         u:object_r:tracing_shell_writable:s0
+/sys/kernel(/debug)?/tracing/events/binder/binder_locked/enable                     u:object_r:tracing_shell_writable:s0
+/sys/kernel(/debug)?/tracing/events/binder/binder_lock/enable                       u:object_r:tracing_shell_writable:s0
+/sys/kernel(/debug)?/tracing/events/binder/binder_transaction/enable                u:object_r:tracing_shell_writable:s0
+/sys/kernel(/debug)?/tracing/events/binder/binder_transaction_received/enable       u:object_r:tracing_shell_writable:s0
+/sys/kernel(/debug)?/tracing/events/binder/binder_unlock/enable                     u:object_r:tracing_shell_writable:s0
+/sys/kernel(/debug)?/tracing/events/cpufreq_interactive/enable                      u:object_r:tracing_shell_writable:s0
+/sys/kernel(/debug)?/tracing/events/power/clock_set_rate/enable                     u:object_r:tracing_shell_writable:s0
+/sys/kernel(/debug)?/tracing/events/power/cpu_frequency/enable                      u:object_r:tracing_shell_writable:s0
+/sys/kernel(/debug)?/tracing/events/power/cpu_frequency_limits/enable               u:object_r:tracing_shell_writable:s0
+/sys/kernel(/debug)?/tracing/events/power/cpu_idle/enable                           u:object_r:tracing_shell_writable:s0
+/sys/kernel(/debug)?/tracing/events/sched/sched_blocked_reason/enable               u:object_r:tracing_shell_writable:s0
+/sys/kernel(/debug)?/tracing/events/sched/sched_cpu_hotplug/enable                  u:object_r:tracing_shell_writable:s0
+/sys/kernel(/debug)?/tracing/events/sched/sched_switch/enable                       u:object_r:tracing_shell_writable:s0
+/sys/kernel(/debug)?/tracing/events/sched/sched_wakeup/enable                       u:object_r:tracing_shell_writable:s0
+/sys/kernel(/debug)?/tracing/events/vmscan/mm_vmscan_direct_reclaim_begin/enable    u:object_r:tracing_shell_writable:s0
+/sys/kernel(/debug)?/tracing/events/vmscan/mm_vmscan_direct_reclaim_end/enable      u:object_r:tracing_shell_writable:s0
+/sys/kernel(/debug)?/tracing/events/vmscan/mm_vmscan_kswapd_sleep/enable            u:object_r:tracing_shell_writable:s0
+/sys/kernel(/debug)?/tracing/events/vmscan/mm_vmscan_kswapd_wake/enable             u:object_r:tracing_shell_writable:s0
+/sys/kernel(/debug)?/tracing/instances(/.*)?                                        u:object_r:debugfs_tracing_instances:s0
+/sys/kernel(/debug)?/tracing/instances/wifi/free_buffer                             u:object_r:debugfs_wifi_tracing:s0
+/sys/kernel(/debug)?/tracing/instances/wifi/trace                                   u:object_r:debugfs_wifi_tracing:s0
+/sys/kernel(/debug)?/tracing/instances/wifi/tracing_on                              u:object_r:debugfs_wifi_tracing:s0
+/sys/kernel(/debug)?/tracing/options/overwrite                                      u:object_r:tracing_shell_writable:s0
+/sys/kernel(/debug)?/tracing/options/print-tgid                                     u:object_r:tracing_shell_writable:s0
+/sys/kernel(/debug)?/tracing/trace                                                  u:object_r:tracing_shell_writable:s0
+/sys/kernel(/debug)?/tracing/trace_clock                                            u:object_r:tracing_shell_writable:s0
+/sys/kernel(/debug)?/tracing/trace_marker                                           u:object_r:debugfs_trace_marker:s0
+/sys/kernel(/debug)?/tracing/tracing_on                                             u:object_r:tracing_shell_writable:s0
 
 #############################
 # asec containers

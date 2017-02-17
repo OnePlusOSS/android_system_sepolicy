@@ -71,7 +71,9 @@ allow surfaceflinger surfaceflinger_service:service_manager { add find };
 allow surfaceflinger mediaserver_service:service_manager find;
 allow surfaceflinger permission_service:service_manager find;
 allow surfaceflinger power_service:service_manager find;
+allow surfaceflinger vr_manager_service:service_manager find;
 allow surfaceflinger window_service:service_manager find;
+
 
 # allow self to set SCHED_FIFO
 allow surfaceflinger self:capability sys_nice;
@@ -82,6 +84,13 @@ r_dir_file(surfaceflinger, system_file)
 allow surfaceflinger tmpfs:dir r_dir_perms;
 allow surfaceflinger system_server:fd use;
 allow surfaceflinger ion_device:chr_file r_file_perms;
+
+# pdx IPC
+pdx_server(surfaceflinger)
+
+use_pdx(surfaceflinger, bufferhubd)
+use_pdx(surfaceflinger, performanced)
+use_pdx(surfaceflinger, sensord)
 
 ###
 ### Neverallow rules

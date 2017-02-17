@@ -1,5 +1,5 @@
 # init is its own domain.
-type init, domain, domain_deprecated, mlstrustedsubject;
+type init, domain, mlstrustedsubject;
 
 # The init domain is entered by execing init.
 type init_exec, exec_type, file_type;
@@ -175,6 +175,8 @@ allow init {
   -vold_data_file
 }:lnk_file { create getattr setattr relabelfrom unlink };
 
+allow init cache_file:lnk_file r_file_perms;
+
 allow init { file_type -system_file -exec_type }:dir_file_class_set relabelto;
 allow init { sysfs debugfs debugfs_tracing }:{ dir file lnk_file } { getattr relabelfrom };
 allow init { sysfs_type debugfs_type }:{ dir file lnk_file } relabelto;
@@ -182,7 +184,7 @@ allow init dev_type:dir create_dir_perms;
 allow init dev_type:lnk_file create;
 
 # Disable tracing by writing to /sys/kernel/debug/tracing/tracing_on
-allow init debugfs_tracing:file w_file_perms;
+allow init tracing_shell_writable:file w_file_perms;
 
 userdebug_or_eng(`
   # Setup and control wifi event tracing (see wifi-events.rc)
@@ -200,10 +202,24 @@ allow init { fs_type -contextmount_type -sdcard_type -rootfs }:dir  { open read 
 allow init { dev_type -kmem_device -port_device -device }:chr_file { read open };
 auditallow init {
   dev_type
-  -kmem_device
-  -port_device
+  -alarm_device
+  -ashmem_device
+  -binder_device
+  -console_device
   -device
+  -devpts
+  -dm_device
+  -hwbinder_device
+  -hw_random_device
+  -keychord_device
+  -kmem_device
+  -kmsg_device
   -null_device
+  -owntty_device
+  -port_device
+  -ptmx_device
+  -random_device
+  -zero_device
 }:chr_file { read open };
 
 # chown/chmod on devices.
