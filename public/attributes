@@ -95,6 +95,9 @@ attribute mlstrustedobject;
 # All domains used for apps.
 attribute appdomain;
 
+# All third party apps.
+attribute untrusted_app_all;
+
 # All domains used for apps with network access.
 attribute netdomain;
 
@@ -114,18 +117,32 @@ attribute boot_control_hal;
 # recovery for A/B devices.
 attribute update_engine_common;
 
-# All domains used for HAL implementations
-attribute haldomain;
+# All HAL servers
+attribute halserverdomain;
+# All HAL clients
+attribute halclientdomain;
 
 # HALs
 attribute hal_audio;
+attribute hal_audio_client;
+attribute hal_audio_server;
 attribute hal_bluetooth;
+attribute hal_bluetooth_client;
+attribute hal_bluetooth_server;
 attribute hal_camera;
+attribute hal_camera_client;
+attribute hal_camera_server;
 attribute hal_configstore;
 attribute hal_contexthub;
 attribute hal_drm;
+attribute hal_drm_client;
+attribute hal_drm_server;
 attribute hal_dumpstate;
+attribute hal_dumpstate_client;
+attribute hal_dumpstate_server;
 attribute hal_fingerprint;
+attribute hal_fingerprint_client;
+attribute hal_fingerprint_server;
 attribute hal_gatekeeper;
 attribute hal_gnss;
 attribute hal_graphics_allocator;
@@ -149,3 +166,5 @@ attribute hal_wifi;
 
 # Domain type used for debugfs access
 attribute qti_debugfs_domain;
+attribute hal_wifi_client;
+attribute hal_wifi_server;

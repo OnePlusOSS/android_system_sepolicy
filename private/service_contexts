@@ -103,6 +103,7 @@ network_time_update_service               u:object_r:network_time_update_service
 nfc                                       u:object_r:nfc_service:s0
 notification                              u:object_r:notification_service:s0
 otadexopt                                 u:object_r:otadexopt_service:s0
+overlay                                   u:object_r:overlay_service:s0
 package                                   u:object_r:package_service:s0
 permission                                u:object_r:permission_service:s0
 persistent_data_block                     u:object_r:persistent_data_block_service:s0
@@ -154,6 +155,7 @@ user                                      u:object_r:user_service:s0
 vibrator                                  u:object_r:vibrator_service:s0
 virtual_touchpad                          u:object_r:virtual_touchpad_service:s0
 voiceinteraction                          u:object_r:voiceinteraction_service:s0
+vr_window_manager                         u:object_r:vr_window_manager_service:s0
 vrmanager                                 u:object_r:vr_manager_service:s0
 wallpaper                                 u:object_r:wallpaper_service:s0
 webviewupdate                             u:object_r:webviewupdate_service:s0

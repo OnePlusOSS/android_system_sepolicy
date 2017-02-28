@@ -68,15 +68,12 @@ allow system_server self:capability {
     net_raw
     sys_boot
     sys_nice
-    sys_resource
+    sys_ptrace
     sys_time
     sys_tty_config
 };
 
 wakelock_use(system_server)
-
-# Triggered by /proc/pid accesses, not allowed.
-dontaudit system_server self:capability sys_ptrace;
 
 # Trigger module auto-load.
 allow system_server kernel:system module_request;
@@ -108,6 +105,7 @@ allow system_server appdomain:process { getsched setsched };
 allow system_server audioserver:process { getsched setsched };
 allow system_server hal_audio:process { getsched setsched };
 allow system_server cameraserver:process { getsched setsched };
+allow system_server hal_camera:process { getsched setsched };
 allow system_server mediaserver:process { getsched setsched };
 allow system_server bootanim:process { getsched setsched };
 
@@ -169,7 +167,6 @@ binder_call(system_server, appdomain)
 binder_call(system_server, binderservicedomain)
 binder_call(system_server, dumpstate)
 binder_call(system_server, fingerprintd)
-binder_call(system_server, hal_fingerprint)
 binder_call(system_server, gatekeeperd)
 binder_call(system_server, installd)
 binder_call(system_server, incidentd)
@@ -180,10 +177,9 @@ binder_service(system_server)
 # Perform HwBinder IPC.
 hwbinder_use(system_server)
 hwallocator_use(system_server)
-binder_call(system_server, hal_bluetooth)
 binder_call(system_server, hal_boot)
 binder_call(system_server, hal_contexthub)
-binder_call(system_server, hal_fingerprint)
+hal_client_domain(system_server, hal_fingerprint)
 binder_call(system_server, hal_gnss);
 binder_call(system_server, hal_ir)
 binder_call(system_server, hal_light)
@@ -194,8 +190,7 @@ binder_call(system_server, hal_thermal)
 binder_call(system_server, hal_usb)
 binder_call(system_server, hal_vibrator)
 binder_call(system_server, hal_vr)
-binder_call(system_server, hal_wifi)
-binder_call(system_server, hal_drm)
+hal_client_domain(system_server, hal_wifi)
 binder_call(system_server, wpa)
 
 # Talk to tombstoned to get ANR traces.
@@ -696,3 +691,11 @@ neverallow system_server system_server_tmpfs:file execute;
 # dexoptanalyzer is currently used only for secondary dex files which
 # system_server should never access.
 neverallow system_server dexoptanalyzer_exec:file no_x_file_perms;
+
+# No ptracing others
+neverallow system_server { domain -system_server }:process ptrace;
+
+# CAP_SYS_RESOURCE was traditionally needed for sensitive /proc/PID
+# file read access. However, that is now unnecessary (b/34951864)
+# This neverallow can be removed after b/34951864 is fixed.
+neverallow system_server system_server:capability sys_resource;

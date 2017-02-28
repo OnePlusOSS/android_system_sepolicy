@@ -10,12 +10,8 @@ binder_call(audioserver, binderservicedomain)
 binder_call(audioserver, appdomain)
 binder_service(audioserver)
 
-hwbinder_use(audioserver)
-binder_call(audioserver, hal_audio)
-hwallocator_use(audioserver)
+hal_client_domain(audioserver, hal_audio)
 
-r_dir_file(audioserver, proc)
-allow audioserver ion_device:chr_file r_file_perms;
 allow audioserver system_file:dir r_dir_perms;
 
 userdebug_or_eng(`
@@ -28,9 +24,6 @@ userdebug_or_eng(`
   allow audioserver self:process ptrace;
 ')
 
-allow audioserver audio_device:dir r_dir_perms;
-allow audioserver audio_device:chr_file rw_file_perms;
-
 add_service(audioserver, audioserver_service)
 allow audioserver appops_service:service_manager find;
 allow audioserver batterystats_service:service_manager find;
@@ -42,10 +35,6 @@ allow audioserver scheduling_policy_service:service_manager find;
 allow audioserver audio_data_file:dir ra_dir_perms;
 allow audioserver audio_data_file:file create_file_perms;
 
-# Needed on some devices for playing audio on paired BT device,
-# but seems appropriate for all devices.
-unix_socket_connect(audioserver, bluetooth, bluetooth)
-
 ###
 ### neverallow rules
 ###
@@ -54,5 +43,14 @@ unix_socket_connect(audioserver, bluetooth, bluetooth)
 # domain transition
 neverallow audioserver { file_type fs_type }:file execute_no_trans;
 
-# audioserver should never need network access. Disallow network sockets.
+# The goal of the mediaserver split is to place media processing code into
+# restrictive sandboxes with limited responsibilities and thus limited
+# permissions. Example: Audioserver is only responsible for controlling audio
+# hardware and processing audio content. Cameraserver does the same for camera
+# hardware/content. Etc.
+#
+# Media processing code is inherently risky and thus should have limited
+# permissions and be isolated from the rest of the system and network.
+# Lengthier explanation here:
+# https://android-developers.googleblog.com/2016/05/hardening-media-stack.html
 neverallow audioserver domain:{ tcp_socket udp_socket rawip_socket } *;
