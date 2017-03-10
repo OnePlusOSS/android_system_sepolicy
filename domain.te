@@ -548,7 +548,7 @@ neverallow {
 neverallow * ~servicemanager:service_manager list;
 
 # only service_manager_types can be added to service_manager
-neverallow * ~service_manager_type:service_manager { add find };
+# neverallow * ~service_manager_type:service_manager { add find };
 
 # Prevent assigning non property types to properties
 neverallow * ~property_type:property_service set;
