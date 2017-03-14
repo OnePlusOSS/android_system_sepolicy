@@ -291,6 +291,7 @@ allow hwservicemanager $1:process getattr;
 # stability). getService must also check for data to be mounted
 # if the vintf promises the hal will be registered over hwbinder.
 get_prop($1, hal_binderization_prop)
+get_prop($1, persistent_properties_ready_prop)
 get_prop($1, vold_prop)
 # rw access to /dev/hwbinder and /dev/ashmem is presently granted to
 # all domains in domain.te.
@@ -388,6 +389,20 @@ define(`recovery_only', ifelse(target_recovery, `true', $1, ))
 # SELinux rules which apply only to userdebug or eng builds
 #
 define(`userdebug_or_eng', ifelse(target_build_variant, `eng', $1, ifelse(target_build_variant, `userdebug', $1)))
+
+####################################
+# Fallback crash handling for processes that can't exec crash_dump (e.g. because of seccomp).
+#
+define(`crash_dump_fallback', `
+userdebug_or_eng(`
+  allow $1 su:fifo_file append;
+')
+allow $1 anr_data_file:file append;
+allow $1 tombstoned:unix_stream_socket connectto;
+allow $1 tombstoned:fd use;
+allow $1 tombstoned_crash_socket:sock_file write;
+allow $1 tombstone_data_file:file append;
+')
 
 #####################################
 # WITH_DEXPREOPT builds

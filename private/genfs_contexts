@@ -6,6 +6,7 @@ genfscon proc /config.gz u:object_r:config_gz:s0
 genfscon proc /interrupts u:object_r:proc_interrupts:s0
 genfscon proc /iomem u:object_r:proc_iomem:s0
 genfscon proc /meminfo u:object_r:proc_meminfo:s0
+genfscon proc /misc u:object_r:proc_misc:s0
 genfscon proc /net u:object_r:proc_net:s0
 genfscon proc /net/xt_qtaguid/ctrl u:object_r:qtaguid_proc:s0
 genfscon proc /cpuinfo u:object_r:proc_cpuinfo:s0
@@ -21,11 +22,14 @@ genfscon proc /sys/kernel/hotplug u:object_r:usermodehelper:s0
 genfscon proc /sys/kernel/kptr_restrict u:object_r:proc_security:s0
 genfscon proc /sys/kernel/modprobe u:object_r:usermodehelper:s0
 genfscon proc /sys/kernel/modules_disabled u:object_r:proc_security:s0
+genfscon proc /sys/kernel/perf_event_max_sample_rate u:object_r:proc_perf:s0
 genfscon proc /sys/kernel/poweroff_cmd u:object_r:usermodehelper:s0
 genfscon proc /sys/kernel/randomize_va_space u:object_r:proc_security:s0
 genfscon proc /sys/kernel/usermodehelper u:object_r:usermodehelper:s0
 genfscon proc /sys/net u:object_r:proc_net:s0
 genfscon proc /sys/vm/mmap_min_addr u:object_r:proc_security:s0
+genfscon proc /sys/vm/mmap_rnd_bits u:object_r:proc_security:s0
+genfscon proc /sys/vm/mmap_rnd_compat_bits u:object_r:proc_security:s0
 genfscon proc /sys/vm/drop_caches u:object_r:proc_drop_caches:s0
 genfscon proc /sys/vm/overcommit_memory u:object_r:proc_overcommit_memory:s0
 genfscon proc /timer_list u:object_r:proc_timer:s0

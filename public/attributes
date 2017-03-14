@@ -76,6 +76,9 @@ attribute system_server_service;
 # services which should be available to all but isolated apps
 attribute app_api_service;
 
+# services which should be available to all ephemeral apps
+attribute ephemeral_app_api_service;
+
 # services which export only system_api
 attribute system_api_service;
 
@@ -150,6 +153,8 @@ attribute hal_graphics_composer;
 attribute hal_health;
 attribute hal_ir;
 attribute hal_keymaster;
+attribute hal_keymaster_client;
+attribute hal_keymaster_server;
 attribute hal_light;
 attribute hal_memtrack;
 attribute hal_nfc;
@@ -171,3 +176,6 @@ attribute hal_wifi_server;
 
 # Domain type used by test teams
 attribute qti_testscripts_domain;
+attribute hal_wifi_supplicant;
+attribute hal_wifi_supplicant_client;
+attribute hal_wifi_supplicant_server;

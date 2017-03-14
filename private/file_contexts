@@ -187,7 +187,6 @@
 /system/bin/vold	u:object_r:vold_exec:s0
 /system/bin/netd	u:object_r:netd_exec:s0
 /system/bin/wificond	u:object_r:wificond_exec:s0
-/system/bin/rild	u:object_r:rild_exec:s0
 /system/bin/audioserver	u:object_r:audioserver_exec:s0
 /system/bin/mediadrmserver	u:object_r:mediadrmserver_exec:s0
 /system/bin/mediaserver	u:object_r:mediaserver_exec:s0
@@ -205,7 +204,6 @@
 /system/bin/crash_dump32 u:object_r:crash_dump_exec:s0
 /system/bin/crash_dump64 u:object_r:crash_dump_exec:s0
 /system/bin/tombstoned u:object_r:tombstoned_exec:s0
-/system/bin/wpa_supplicant	u:object_r:wpa_exec:s0
 /system/bin/recovery-persist     u:object_r:recovery_persist_exec:s0
 /system/bin/recovery-refresh     u:object_r:recovery_refresh_exec:s0
 /system/bin/sdcard      u:object_r:sdcardd_exec:s0
@@ -219,7 +217,6 @@
 /system/xbin/perfprofd  u:object_r:perfprofd_exec:s0
 /system/bin/dnsmasq     u:object_r:dnsmasq_exec:s0
 /system/bin/healthd     u:object_r:healthd_exec:s0
-/system/bin/hostapd     u:object_r:hostapd_exec:s0
 /system/bin/clatd	u:object_r:clatd_exec:s0
 /system/bin/lmkd        u:object_r:lmkd_exec:s0
 /system/bin/inputflinger u:object_r:inputflinger_exec:s0
@@ -247,7 +244,6 @@
 /system/bin/webview_zygote64     u:object_r:webview_zygote_exec:s0
 /system/bin/virtual_touchpad     u:object_r:virtual_touchpad_exec:s0
 /system/bin/vr_wm                u:object_r:vr_wm_exec:s0
-/system/bin/hw/android\.hardware\.bluetooth@1\.0-service      u:object_r:hal_bluetooth_default_exec:s0
 /system/bin/hw/android\.hidl\.allocator@1\.0-service          u:object_r:hal_allocator_exec:s0
 
 #############################
@@ -328,7 +324,6 @@
 /data/misc/wifi(/.*)?           u:object_r:wifi_data_file:s0
 /data/misc/wifi/sockets(/.*)?   u:object_r:wpa_socket:s0
 /data/misc/wifi/sockets/wpa_ctrl.*   u:object_r:system_wpa_socket:s0
-/data/misc/wifi/hostapd(/.*)?   u:object_r:hostapd_socket:s0
 /data/misc/zoneinfo(/.*)?       u:object_r:zoneinfo_data_file:s0
 /data/misc/vold(/.*)?           u:object_r:vold_data_file:s0
 /data/misc/perfprofd(/.*)?      u:object_r:perfprofd_data_file:s0
@@ -338,7 +333,6 @@
 # TODO(calin) label profile reference differently so that only
 # profman run as a special user can write to them
 /data/misc/profiles/cur(/.*)?       u:object_r:user_profile_data_file:s0
-/data/misc/profiles/cur/[0-9]+/foreign-dex(/.*)? u:object_r:user_profile_foreign_dex_data_file:s0
 /data/misc/profiles/ref(/.*)?       u:object_r:user_profile_data_file:s0
 /data/misc/profman(/.*)?        u:object_r:profman_dump_data_file:s0
 

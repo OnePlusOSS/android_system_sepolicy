@@ -24,7 +24,6 @@ common_time.clock                         u:object_r:mediaserver_service:s0
 common_time.config                        u:object_r:mediaserver_service:s0
 companion_device                          u:object_r:companion_device_service:s0
 connectivity                              u:object_r:connectivity_service:s0
-connectivity_metrics_logger               u:object_r:connectivity_metrics_logger_service:s0
 connmetrics                               u:object_r:connmetrics_service:s0
 consumer_ir                               u:object_r:consumer_ir_service:s0
 content                                   u:object_r:content_service:s0
@@ -46,6 +45,7 @@ dreams                                    u:object_r:dreams_service:s0
 drm.drmManager                            u:object_r:drmserver_service:s0
 dropbox                                   u:object_r:dropbox_service:s0
 dumpstate                                 u:object_r:dumpstate_service:s0
+econtroller                               u:object_r:radio_service:s0
 ethernet                                  u:object_r:ethernet_service:s0
 fingerprint                               u:object_r:fingerprint_service:s0
 font                                      u:object_r:font_service:s0
@@ -87,6 +87,7 @@ media.resource_manager                    u:object_r:mediaserver_service:s0
 media.radio                               u:object_r:audioserver_service:s0
 media.sound_trigger_hw                    u:object_r:audioserver_service:s0
 media.drm                                 u:object_r:mediadrmserver_service:s0
+media.cas                                 u:object_r:mediacasserver_service:s0
 media_projection                          u:object_r:media_projection_service:s0
 media_resource_monitor                    u:object_r:media_session_service:s0
 media_router                              u:object_r:media_router_service:s0
@@ -165,5 +166,4 @@ wifi                                      u:object_r:wifi_service:s0
 wificond                                  u:object_r:wificond_service:s0
 wifiaware                                 u:object_r:wifiaware_service:s0
 window                                    u:object_r:window_service:s0
-wpa                                       u:object_r:wpa_supplicant_service:s0
 *                                         u:object_r:default_android_service:s0

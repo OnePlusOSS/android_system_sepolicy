@@ -66,6 +66,7 @@ allow untrusted_app_all mediaextractor_service:service_manager find;
 allow untrusted_app_all mediacodec_service:service_manager find;
 allow untrusted_app_all mediametrics_service:service_manager find;
 allow untrusted_app_all mediadrmserver_service:service_manager find;
+allow untrusted_app_all mediacasserver_service:service_manager find;
 allow untrusted_app_all nfc_service:service_manager find;
 allow untrusted_app_all radio_service:service_manager find;
 allow untrusted_app_all surfaceflinger_service:service_manager find;
@@ -90,9 +91,3 @@ allow untrusted_app_all sysfs_hwrandom:file r_file_perms;
 # Allow apps to view preloaded content
 allow untrusted_app_all preloads_data_file:dir r_dir_perms;
 allow untrusted_app_all preloads_data_file:file r_file_perms;
-
-# Access to /proc/tty/drivers, to allow apps to determine if they
-# are running in an emulated environment.
-# b/33214085 b/33814662 b/33791054 b/33211769
-# https://github.com/strazzere/anti-emulator/blob/master/AntiEmulator/src/diff/strazzere/anti/emulator/FindEmulator.java
-allow untrusted_app_all proc_tty_drivers:file r_file_perms;
