@@ -129,6 +129,8 @@ ifneq (,$(filter mips mips64,$(TARGET_ARCH)))
   my_target_arch := mips
 endif
 
+intermediates := $(TARGET_OUT_INTERMEDIATES)/ETC/sepolicy_intermediates
+
 ##################################
 # reqd_policy_mask - a policy.conf file which contains only the bare minimum
 # policy necessary to use checkpolicy.  This bare-minimum policy needs to be
@@ -439,9 +441,10 @@ include $(CLEAR_VARS)
 # keep concrete sepolicy for neverallow checks
 
 LOCAL_MODULE := sepolicy.recovery
+LOCAL_MODULE_STEM := sepolicy
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_TAGS := optional
-LOCAL_MODULE_PATH := $(TARGET_ROOT_OUT)
+LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)
 
 include $(BUILD_SYSTEM)/base_rules.mk
 
@@ -700,6 +703,20 @@ file_contexts.local.tmp :=
 ##################################
 include $(CLEAR_VARS)
 
+LOCAL_MODULE := file_contexts.bin.recovery
+LOCAL_MODULE_STEM := file_contexts.bin
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)
+
+include $(BUILD_SYSTEM)/base_rules.mk
+
+$(LOCAL_BUILT_MODULE): $(built_fc)
+	$(hide) cp -f $< $@
+
+##################################
+include $(CLEAR_VARS)
+
 LOCAL_MODULE := plat_file_contexts
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_TAGS := optional
@@ -799,8 +816,8 @@ $(LOCAL_BUILT_MODULE): PRIVATE_SC_FILES := $(nonplat_sc_files)
 $(LOCAL_BUILT_MODULE): PRIVATE_SC_NEVERALLOW_FILES := $(plat_sc_neverallow_files)
 $(LOCAL_BUILT_MODULE): $(built_sepolicy) $(nonplat_sc_files) $(HOST_OUT_EXECUTABLES)/checkseapp $(plat_sc_neverallow_files)
 	@mkdir -p $(dir $@)
-	$(hide) grep -ie '^neverallow' $(PRIVATE_SC_NEVERALLOW_FILES) > plat_seapp_neverallows.tmp
-	$(hide) $(HOST_OUT_EXECUTABLES)/checkseapp -p $(PRIVATE_SEPOLICY) -o $@ $(PRIVATE_SC_FILES) plat_seapp_neverallows.tmp
+	$(hide) grep -ie '^neverallow' $(PRIVATE_SC_NEVERALLOW_FILES) > $@.tmp
+	$(hide) $(HOST_OUT_EXECUTABLES)/checkseapp -p $(PRIVATE_SEPOLICY) -o $@ $(PRIVATE_SC_FILES) $@.tmp
 
 built_nonplat_sc := $(LOCAL_BUILT_MODULE)
 nonplat_sc_files :=
@@ -825,8 +842,12 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := plat_property_contexts
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_TAGS := optional
-# TODO: Change module path to TARGET_SYSTEM_OUT after b/27805372
+
+ifeq ($(PRODUCT_FULL_TREBLE),true)
+LOCAL_MODULE_PATH := $(TARGET_OUT)/etc/selinux
+else
 LOCAL_MODULE_PATH := $(TARGET_ROOT_OUT)
+endif
 
 include $(BUILD_SYSTEM)/base_rules.mk
 
@@ -856,8 +877,12 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := nonplat_property_contexts
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_TAGS := optional
-# TODO: Change module path to TARGET_SYSTEM_OUT after b/27805372
+
+ifeq ($(PRODUCT_FULL_TREBLE),true)
+LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/etc/selinux
+else
 LOCAL_MODULE_PATH := $(TARGET_ROOT_OUT)
+endif
 
 include $(BUILD_SYSTEM)/base_rules.mk
 
@@ -880,6 +905,34 @@ $(LOCAL_BUILT_MODULE): $(nonplat_property_contexts.tmp) $(built_sepolicy) $(HOST
 built_nonplat_pc := $(LOCAL_BUILT_MODULE)
 nonplat_pcfiles :=
 nonplat_property_contexts.tmp :=
+
+##################################
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := plat_property_contexts.recovery
+LOCAL_MODULE_STEM := plat_property_contexts
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)
+
+include $(BUILD_SYSTEM)/base_rules.mk
+
+$(LOCAL_BUILT_MODULE): $(built_plat_pc)
+	$(hide) cp -f $< $@
+
+##################################
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := nonplat_property_contexts.recovery
+LOCAL_MODULE_STEM := nonplat_property_contexts
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)
+
+include $(BUILD_SYSTEM)/base_rules.mk
+
+$(LOCAL_BUILT_MODULE): $(built_nonplat_pc)
+	$(hide) cp -f $< $@
 
 ##################################
 include $(CLEAR_VARS)
@@ -1008,20 +1061,6 @@ $(all_nonplat_mac_perms_files)
 
 nonplat_mac_perms_keys.tmp :=
 all_nonplat_mac_perms_files :=
-
-##################################
-include $(CLEAR_VARS)
-
-LOCAL_MODULE := selinux_version
-LOCAL_MODULE_CLASS := ETC
-LOCAL_MODULE_TAGS := optional
-LOCAL_MODULE_PATH := $(TARGET_ROOT_OUT)
-
-include $(BUILD_SYSTEM)/base_rules.mk
-$(LOCAL_BUILT_MODULE): $(built_sepolicy) $(built_plat_pc) $(built_nonplat_pc) $(built_plat_fc) \
-$(buit_nonplat_fc) $(built_plat_sc) $(built_nonplat_sc) $(built_plat_svc) $(built_nonplat_svc)
-	@mkdir -p $(dir $@)
-	$(hide) echo -n $(BUILD_FINGERPRINT_FROM_FILE) > $@
 
 ##################################
 

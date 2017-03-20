@@ -173,17 +173,28 @@ hwbinder_use(system_server)
 hwallocator_use(system_server)
 binder_call(system_server, hal_boot)
 binder_call(system_server, hal_contexthub)
+hal_client_domain(system_server, hal_contexthub)
 hal_client_domain(system_server, hal_fingerprint)
-binder_call(system_server, hal_gnss);
+binder_call(system_server, hal_gnss)
+hal_client_domain(system_server, hal_gnss)
+binder_call(system_server, hal_graphics_allocator)
 binder_call(system_server, hal_ir)
+hal_client_domain(system_server, hal_ir)
 binder_call(system_server, hal_light)
+hal_client_domain(system_server, hal_light)
 binder_call(system_server, hal_memtrack)
+hal_client_domain(system_server, hal_memtrack)
 binder_call(system_server, hal_power)
-binder_call(system_server, hal_sensors)
+hal_client_domain(system_server, hal_power)
+hal_client_domain(system_server, hal_sensors)
 binder_call(system_server, hal_thermal)
+hal_client_domain(system_server, hal_thermal)
 binder_call(system_server, hal_usb)
+hal_client_domain(system_server, hal_usb)
 binder_call(system_server, hal_vibrator)
+hal_client_domain(system_server, hal_vibrator)
 binder_call(system_server, hal_vr)
+hal_client_domain(system_server, hal_vr)
 hal_client_domain(system_server, hal_wifi)
 hal_client_domain(system_server, hal_wifi_supplicant)
 
@@ -450,9 +461,6 @@ allow system_server cache_private_backup_file:file create_file_perms;
 allow system_server usb_device:chr_file rw_file_perms;
 allow system_server usb_device:dir r_dir_perms;
 
-# Allow system to talk to sensors
-allow system_server sensors_device:chr_file rw_file_perms;
-
 # Read from HW RNG (needed by EntropyMixer).
 allow system_server hw_random_device:chr_file r_file_perms;
 
@@ -599,6 +607,8 @@ allow system_server update_engine:fifo_file write;
 # Access to /data/preloads
 allow system_server preloads_data_file:file { r_file_perms unlink };
 allow system_server preloads_data_file:dir { r_dir_perms write remove_name rmdir };
+allow system_server preloads_media_file:file { r_file_perms unlink };
+allow system_server preloads_media_file:dir { r_dir_perms write remove_name rmdir };
 
 r_dir_file(system_server, cgroup)
 allow system_server ion_device:chr_file r_file_perms;
