@@ -87,11 +87,12 @@ allow appdomain oemfs:file rx_file_perms;
 
 # Execute the shell or other system executables.
 allow { appdomain -ephemeral_app -untrusted_v2_app } shell_exec:file rx_file_perms;
-allow { appdomain -ephemeral_app -untrusted_v2_app } system_file:file rx_file_perms;
+allow { appdomain -ephemeral_app -untrusted_v2_app } system_file:file x_file_perms;
 allow { appdomain -ephemeral_app -untrusted_v2_app } toolbox_exec:file rx_file_perms;
 
 # Renderscript needs the ability to read directories on /system
-r_dir_file(appdomain, system_file)
+allow appdomain system_file:dir r_dir_perms;
+allow appdomain system_file:lnk_file { getattr open read };
 
 # Execute dex2oat when apps call dexclassloader
 allow appdomain dex2oat_exec:file rx_file_perms;
@@ -133,7 +134,7 @@ userdebug_or_eng(`
 # Write to /proc/net/xt_qtaguid/ctrl file.
 allow appdomain qtaguid_proc:file rw_file_perms;
 # read /proc/net/xt_qtguid/stats
-r_dir_file(appdomain, proc_net)
+r_dir_file({ appdomain -ephemeral_app}, proc_net)
 # Everybody can read the xt_qtaguid resource tracking misc dev.
 # So allow all apps to read from /dev/xt_qtaguid.
 allow appdomain qtaguid_device:chr_file r_file_perms;
@@ -243,8 +244,14 @@ allow { appdomain -isolated_app } ion_device:chr_file rw_file_perms;
 # TODO is write really necessary ?
 auditallow { appdomain userdebug_or_eng(`-su') } ion_device:chr_file { write append };
 
+# TODO(b/36375899) replace with hal_client_domain for mediacodec (hal_omx)
+get_prop({ appdomain -isolated_app }, hwservicemanager_prop);
+
 # Allow app to access the graphic allocator HAL
 binder_call({ appdomain -isolated_app }, hal_graphics_allocator)
+
+# App can access configstore HAL which is read only
+binder_call({ appdomain -isolated_app }, hal_configstore)
 
 # Allow app to access shared memory created by camera HAL1
 allow { appdomain -isolated_app } hal_camera:fd use;

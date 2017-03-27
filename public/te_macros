@@ -148,26 +148,6 @@ define(`bluetooth_domain', `
 typeattribute $1 bluetoothdomain;
 ')
 
-# TODO: Remove hal_impl_domain once all uses have been switched to hal_server_domain.
-#####################################
-# hal_impl_domain(domain[, hal_type_attr])
-# Allow a base set of permissions required for a domain to host a
-# HAL implementation.
-#
-# Optionally, the type of the HAL can be specified as the second
-# argument. This is useful for HALs which may have multiple
-# implementations. Attributes are used to group the various
-# implementations of such HALs.
-#
-# For example, default implementation of Foo HAL:
-#   type hal_foo_default, domain;
-#   hal_impl_domain(hal_foo_default, hal_foo)
-#
-define(`hal_impl_domain', `
-typeattribute $1 halserverdomain;
-ifelse($2, `', `', `typeattribute $1 $2;')
-')
-
 #####################################
 # hal_server_domain(domain, hal_type)
 # Allow a base set of permissions required for a domain to offer a
@@ -198,6 +178,22 @@ typeattribute $1 $2_client;
 # TODO(b/34170079): Make the inclusion of the rules below conditional,
 # once we know at build time whether a HAL is going to run in
 # passthrough or binderized mode.
+typeattribute $1 $2;
+# Find passthrough HAL implementations
+allow $2 system_file:dir r_dir_perms;
+')
+
+#####################################
+# passthrough_hal_client_domain(domain, hal_type)
+# Allow a base set of permissions required for a domain to be a
+# client of a passthrough HAL of the specified type.
+#
+# For example, make some_domain a client of passthrough Foo HAL:
+#   passthrough_hal_client_domain(some_domain, hal_foo)
+#
+define(`passthrough_hal_client_domain', `
+typeattribute $1 halclientdomain;
+typeattribute $1 $2_client;
 typeattribute $1 $2;
 # Find passthrough HAL implementations
 allow $2 system_file:dir r_dir_perms;
@@ -298,6 +294,20 @@ get_prop($1, vold_prop)
 ')
 
 #####################################
+# vndbinder_use(domain)
+# Allow domain to use Binder IPC.
+define(`vndbinder_use', `
+# Talk to the vndbinder device node
+allow $1 vndbinder_device:chr_file rw_file_perms;
+# Call the vndservicemanager and transfer references to it.
+allow $1 vndservicemanager:binder { call transfer };
+# vndservicemanager performs getpidcon on clients.
+allow vndservicemanager $1:dir search;
+allow vndservicemanager $1:file { read open };
+allow vndservicemanager $1:process getattr;
+')
+
+#####################################
 # binder_call(clientdomain, serverdomain)
 # Allow clientdomain to perform binder IPC to serverdomain.
 define(`binder_call', `
@@ -322,7 +332,7 @@ typeattribute $1 binderservicedomain;
 # Allow a domain to use Hidl shared memory
 define(`hwallocator_use', `
 # Call into the allocator hal
-binder_call($1, hal_allocator);
+binder_call($1, hal_allocator_server);
 ')
 
 #####################################
@@ -389,6 +399,12 @@ define(`recovery_only', ifelse(target_recovery, `true', $1, ))
 # SELinux rules which apply only to userdebug or eng builds
 #
 define(`userdebug_or_eng', ifelse(target_build_variant, `eng', $1, ifelse(target_build_variant, `userdebug', $1)))
+
+#####################################
+# asan builds
+# SELinux rules which apply only to asan builds
+#
+define(`with_asan', ifelse(target_with_asan, `true', userdebug_or_eng(`$1'), ))
 
 ####################################
 # Fallback crash handling for processes that can't exec crash_dump (e.g. because of seccomp).

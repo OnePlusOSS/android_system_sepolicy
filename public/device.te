@@ -7,6 +7,7 @@ type audio_timer_device, dev_type;
 type audio_seq_device, dev_type;
 type binder_device, dev_type, mlstrustedobject;
 type hwbinder_device, dev_type, mlstrustedobject;
+type vndbinder_device, dev_type;
 type block_device, dev_type;
 type camera_device, dev_type;
 type dm_device, dev_type;
@@ -99,6 +100,3 @@ type metadata_block_device, dev_type;
 
 # The 'misc' partition used by recovery and A/B.
 type misc_block_device, dev_type;
-
-# Bootctrl block device used by A/B update (update_engine, update_verifier).
-type bootctrl_block_device, dev_type;
