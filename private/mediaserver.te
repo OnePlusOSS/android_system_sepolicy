@@ -1,3 +1,6 @@
-# type_transition must be private policy the domain_trans rules could stay
-# public, but conceptually should go with this
+typeattribute mediaserver coredomain;
+
 init_daemon_domain(mediaserver)
+
+# allocate and use graphic buffers
+hal_client_domain(mediaserver, hal_graphics_allocator)

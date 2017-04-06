@@ -1,15 +1,14 @@
 # webview_zygote is an auxiliary zygote process that is used to spawn
 # isolated_app processes for rendering untrusted web content.
 
+typeattribute webview_zygote coredomain;
+
 # The webview_zygote needs to be able to transition domains.
 typeattribute webview_zygote mlstrustedsubject;
 
 # When init launches the WebView zygote's executable, transition the
 # resulting process into webview_zygote domain.
 init_daemon_domain(webview_zygote)
-
-# Access to system files for SELinux contexts.
-allow webview_zygote rootfs:file r_file_perms;
 
 # Allow reading/executing installed binaries to enable preloading the
 # installed WebView implementation.
@@ -44,6 +43,8 @@ allow webview_zygote system_server:process getpgid;
 # Interaction between the webview_zygote and its children.
 allow webview_zygote isolated_app:process setpgid;
 
+# Get seapp_contexts
+allow webview_zygote seapp_contexts_file:file r_file_perms;
 # Check validity of SELinux context before use.
 selinux_check_context(webview_zygote)
 # Check SELinux permissions.

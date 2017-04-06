@@ -1,5 +1,5 @@
 # storaged daemon
-type storaged, domain, mlstrustedsubject;
+type storaged, domain, coredomain, mlstrustedsubject;
 type storaged_exec, exec_type, file_type;
 
 init_daemon_domain(storaged)
@@ -20,6 +20,10 @@ userdebug_or_eng(`
   allow storaged debugfs_mmc:dir search;
   allow storaged debugfs_mmc:file r_file_perms;
 ')
+
+# Needed to provide debug dump output via dumpsys pipes.
+allow storaged shell:fd use;
+allow storaged shell:fifo_file write;
 
 # Binder permissions
 add_service(storaged, storaged_service)

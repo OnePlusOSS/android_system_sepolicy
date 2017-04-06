@@ -39,6 +39,16 @@ attribute exec_type;
 
 # All types used for /data files.
 attribute data_file_type;
+# All types in /data, not in /data/vendor
+attribute core_data_file_type;
+# All vendor domains which violate the requirement of not accessing
+# data outside /data/vendor.
+# TODO(b/34980020): Remove this once there are no violations
+attribute coredata_in_vendor_violators;
+# All core domains which violate the requirement of not accessing vendor
+# owned data.
+# TODO(b/34980020): Remove this once there are no violations
+attribute vendordata_in_core_violators;
 
 # All types use for sysfs files.
 attribute sysfs_type;
@@ -114,6 +124,21 @@ attribute binderservicedomain;
 # postinstall. This includes the background daemon and the sideload tool from
 # recovery for A/B devices.
 attribute update_engine_common;
+
+# All core domains (as opposed to vendor/device-specific domains)
+attribute coredomain;
+
+# All socket devices owned by core domain components
+attribute coredomain_socket;
+
+# All vendor domains which violate the requirement of not using Binder
+# TODO(b/35870313): Remove this once there are no violations
+attribute binder_in_vendor_violators;
+
+# All vendor domains which violate the requirement of not using sockets for
+# communicating with core components
+# TODO(b/36577153): Remove this once there are no violations
+attribute socket_between_core_and_vendor_violators;
 
 # All HAL servers
 attribute halserverdomain;

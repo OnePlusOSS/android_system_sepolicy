@@ -11,6 +11,9 @@ r_dir_file(kernel, proc)
 allow kernel selinuxfs:dir r_dir_perms;
 allow kernel selinuxfs:file r_file_perms;
 
+# Get file contexts during first stage
+allow kernel file_contexts_file:file r_file_perms;
+
 # Allow init relabel itself.
 allow kernel rootfs:file relabelfrom;
 allow kernel init_exec:file relabelto;
@@ -72,6 +75,9 @@ userdebug_or_eng(`
 # accesses to the underlying FS.
 allow kernel media_rw_data_file:dir create_dir_perms;
 allow kernel media_rw_data_file:file create_file_perms;
+
+# Access to /data/misc/vold/virtual_disk.
+allow kernel vold_data_file:file read;
 
 ###
 ### neverallow rules

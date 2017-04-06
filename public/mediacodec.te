@@ -13,6 +13,8 @@ binder_call(mediacodec, binderservicedomain)
 binder_call(mediacodec, appdomain)
 binder_service(mediacodec)
 
+# TODO(b/36604251): Remove this once OMX HAL stops using Binder
+typeattribute mediacodec binder_in_vendor_violators;
 add_service(mediacodec, mediacodec_service)
 allow mediacodec mediametrics_service:service_manager find;
 allow mediacodec surfaceflinger_service:service_manager find;
@@ -20,15 +22,14 @@ allow mediacodec gpu_device:chr_file rw_file_perms;
 allow mediacodec video_device:chr_file rw_file_perms;
 allow mediacodec video_device:dir search;
 allow mediacodec ion_device:chr_file rw_file_perms;
-allow mediacodec hal_graphics_allocator:fd use;
 allow mediacodec hal_camera:fd use;
 
 crash_dump_fallback(mediacodec)
 
-# hidl access
-hwbinder_use(mediacodec)
-hwallocator_use(mediacodec)
-allow mediacodec system_file:dir { open read };
+hal_client_domain(mediacodec, hal_allocator)
+
+# allocate and use graphic buffers
+hal_client_domain(mediacodec, hal_graphics_allocator)
 
 # Recieve gralloc buffer FDs from bufferhubd. Note that mediacodec never
 # directly connects to bufferhubd via PDX. Instead, a VR app acts as a bridge

@@ -1,7 +1,38 @@
 LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
+LOCAL_MODULE := selinux_policy
+LOCAL_MODULE_TAGS := optional
+# Include SELinux policy. We do this here because different modules
+# need to be included based on the value of PRODUCT_FULL_TREBLE. This
+# type of conditional inclusion cannot be done in top-level files such
+# as build/target/product/embedded.mk.
+# This conditional inclusion closely mimics the conditional logic
+# inside init/init.cpp for loading SELinux policy from files.
+ifeq ($(PRODUCT_FULL_TREBLE),true)
+# Use split SELinux policy
+LOCAL_REQUIRED_MODULES += \
+    mapping_sepolicy.cil \
+    nonplat_sepolicy.cil \
+    plat_sepolicy.cil \
+    plat_sepolicy.cil.sha256 \
+    secilc \
+    nonplat_file_contexts \
+    plat_file_contexts
 
+# Include precompiled policy, unless told otherwise
+ifneq ($(PRODUCT_PRECOMPILED_SEPOLICY),false)
+LOCAL_REQUIRED_MODULES += precompiled_sepolicy precompiled_sepolicy.plat.sha256
+endif
+
+else
+# Use monolithic SELinux policy
+LOCAL_REQUIRED_MODULES += sepolicy \
+    file_contexts.bin
+endif
+include $(BUILD_PHONY_PACKAGE)
+
+include $(CLEAR_VARS)
 # SELinux policy version.
 # Must be <= /sys/fs/selinux/policyvers reported by the Android kernel.
 # Must be within the compatibility range reported by checkpolicy -V.
@@ -124,6 +155,11 @@ sepolicy_build_files := security_classes \
                         genfs_contexts \
                         port_contexts
 
+# CIL files which contain workarounds for current limitation of human-readable
+# module policy language. These files are appended to the CIL files produced
+# from module language files.
+sepolicy_build_cil_workaround_files := technical_debt.cil
+
 my_target_arch := $(TARGET_ARCH)
 ifneq (,$(filter mips mips64,$(TARGET_ARCH)))
   my_target_arch := mips
@@ -158,6 +194,7 @@ $(reqd_policy_mask.conf): $(call build_policy, $(sepolicy_build_files), $(REQD_M
 		-D target_with_dexpreopt=$(WITH_DEXPREOPT) \
 		-D target_arch=$(PRIVATE_TGT_ARCH) \
 		-D target_with_asan=$(PRIVATE_TGT_WITH_ASAN) \
+		-D target_full_treble=$(PRODUCT_FULL_TREBLE) \
 		-s $^ > $@
 
 reqd_policy_mask.cil := $(intermediates)/reqd_policy_mask.cil
@@ -188,6 +225,7 @@ $(BOARD_SEPOLICY_VERS_DIR) $(REQD_MASK_POLICY))
 		-D target_with_dexpreopt=$(WITH_DEXPREOPT) \
 		-D target_arch=$(PRIVATE_TGT_ARCH) \
 		-D target_with_asan=$(PRIVATE_TGT_WITH_ASAN) \
+		-D target_full_treble=$(PRODUCT_FULL_TREBLE) \
 		-s $^ > $@
 
 plat_pub_policy.cil := $(intermediates)/plat_pub_policy.cil
@@ -243,13 +281,18 @@ $(PLAT_PUBLIC_POLICY) $(PLAT_PRIVATE_POLICY))
 		-D target_with_dexpreopt=$(WITH_DEXPREOPT) \
 		-D target_arch=$(PRIVATE_TGT_ARCH) \
 		-D target_with_asan=$(PRIVATE_TGT_WITH_ASAN) \
+		-D target_full_treble=$(PRODUCT_FULL_TREBLE) \
 		-s $^ > $@
 	$(hide) sed '/dontaudit/d' $@ > $@.dontaudit
 
 plat_policy_nvr := $(intermediates)/plat_policy_nvr.cil
-$(plat_policy_nvr): $(plat_policy.conf) $(HOST_OUT_EXECUTABLES)/checkpolicy
+$(plat_policy_nvr): PRIVATE_ADDITIONAL_CIL_FILES := \
+  $(call build_policy, $(sepolicy_build_cil_workaround_files), $(PLAT_PRIVATE_POLICY))
+$(plat_policy_nvr): $(plat_policy.conf) $(HOST_OUT_EXECUTABLES)/checkpolicy \
+  $(call build_policy, $(sepolicy_build_cil_workaround_files), $(PLAT_PRIVATE_POLICY))
 	@mkdir -p $(dir $@)
 	$(hide) $(HOST_OUT_EXECUTABLES)/checkpolicy -M -C -c $(POLICYVERS) -o $@ $<
+	$(hide) cat $(PRIVATE_ADDITIONAL_CIL_FILES) >> $@
 
 $(LOCAL_BUILT_MODULE): PRIVATE_CIL_FILES := $(plat_policy_nvr)
 $(LOCAL_BUILT_MODULE): $(HOST_OUT_EXECUTABLES)/secilc $(plat_policy_nvr)
@@ -342,6 +385,7 @@ $(BOARD_SEPOLICY_VERS_DIR) $(REQD_MASK_POLICY) $(PLAT_VENDOR_POLICY) $(BOARD_SEP
 		-D target_with_dexpreopt=$(WITH_DEXPREOPT) \
 		-D target_arch=$(PRIVATE_TGT_ARCH) \
 		-D target_with_asan=$(PRIVATE_TGT_WITH_ASAN) \
+		-D target_full_treble=$(PRODUCT_FULL_TREBLE) \
 		-s $^ > $@
 	$(hide) sed '/dontaudit/d' $@ > $@.dontaudit
 
@@ -434,7 +478,7 @@ all_cil_files := \
 $(LOCAL_BUILT_MODULE): PRIVATE_CIL_FILES := $(all_cil_files)
 $(LOCAL_BUILT_MODULE): $(HOST_OUT_EXECUTABLES)/secilc $(HOST_OUT_EXECUTABLES)/sepolicy-analyze $(all_cil_files)
 	@mkdir -p $(dir $@)
-	$(hide) $< -M true -c $(POLICYVERS) $(PRIVATE_CIL_FILES) -o $@.tmp
+	$(hide) $< -M true -c $(POLICYVERS) $(PRIVATE_CIL_FILES) -o $@.tmp -f /dev/null
 	$(hide) $(HOST_OUT_EXECUTABLES)/sepolicy-analyze $@.tmp permissive > $@.permissivedomains
 	$(hide) if [ "$(TARGET_BUILD_VARIANT)" = "user" -a -s $@.permissivedomains ]; then \
 		echo "==========" 1>&2; \
@@ -586,7 +630,7 @@ all_cil_files.recovery := \
 $(LOCAL_BUILT_MODULE): PRIVATE_CIL_FILES := $(all_cil_files.recovery)
 $(LOCAL_BUILT_MODULE): $(HOST_OUT_EXECUTABLES)/secilc $(HOST_OUT_EXECUTABLES)/sepolicy-analyze $(all_cil_files.recovery)
 	@mkdir -p $(dir $@)
-	$(hide) $< -M true -c $(POLICYVERS) $(PRIVATE_CIL_FILES) -o $@.tmp
+	$(hide) $< -M true -c $(POLICYVERS) $(PRIVATE_CIL_FILES) -o $@.tmp -f /dev/null
 	$(hide) $(HOST_OUT_EXECUTABLES)/sepolicy-analyze $@.tmp permissive > $@.permissivedomains
 	$(hide) if [ "$(TARGET_BUILD_VARIANT)" = "user" -a -s $@.permissivedomains ]; then \
 		echo "==========" 1>&2; \
@@ -1110,6 +1154,7 @@ plat_policy_nvr :=
 plat_pub_policy.cil :=
 reqd_policy_mask.cil :=
 sepolicy_build_files :=
+sepolicy_build_cil_workaround_files :=
 with_asan :=
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
