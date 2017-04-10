@@ -67,9 +67,6 @@ allow mediaserver app_fuse_file:file { read getattr };
 allow mediaserver qtaguid_proc:file rw_file_perms;
 allow mediaserver qtaguid_device:chr_file r_file_perms;
 
-# Allow abstract socket connection
-allow mediaserver rild:unix_stream_socket { connectto read write setopt };
-
 # Needed on some devices for playing DRM protected content,
 # but seems expected and appropriate for all devices.
 unix_socket_connect(mediaserver, drmserver, drmserver)
@@ -77,9 +74,6 @@ unix_socket_connect(mediaserver, drmserver, drmserver)
 # Needed on some devices for playing audio on paired BT device,
 # but seems appropriate for all devices.
 unix_socket_connect(mediaserver, bluetooth, bluetooth)
-
-# Connect to tee service.
-allow mediaserver tee:unix_stream_socket connectto;
 
 add_service(mediaserver, mediaserver_service)
 allow mediaserver activity_service:service_manager find;

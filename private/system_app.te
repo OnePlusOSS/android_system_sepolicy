@@ -31,7 +31,6 @@ allow system_app icon_file:file r_file_perms;
 # Write to properties
 set_prop(system_app, bluetooth_prop)
 set_prop(system_app, debug_prop)
-set_prop(system_app, hal_binderization_prop)
 set_prop(system_app, system_prop)
 set_prop(system_app, logd_prop)
 set_prop(system_app, net_radio_prop)
@@ -57,7 +56,7 @@ binder_call(system_app, incidentd)
 
 allow system_app servicemanager:service_manager list;
 # TODO: scope this down? Too broad?
-allow system_app { service_manager_type -netd_service -dumpstate_service -installd_service -virtual_touchpad_service }:service_manager find;
+allow system_app { service_manager_type -netd_service -dumpstate_service -installd_service -virtual_touchpad_service -vr_hwc_service }:service_manager find;
 
 allow system_app keystore:keystore_key {
     get_state

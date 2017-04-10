@@ -15,14 +15,14 @@ LOCAL_REQUIRED_MODULES += \
     mapping_sepolicy.cil \
     nonplat_sepolicy.cil \
     plat_sepolicy.cil \
-    plat_sepolicy.cil.sha256 \
+    plat_and_mapping_sepolicy.cil.sha256 \
     secilc \
     nonplat_file_contexts \
     plat_file_contexts
 
 # Include precompiled policy, unless told otherwise
 ifneq ($(PRODUCT_PRECOMPILED_SEPOLICY),false)
-LOCAL_REQUIRED_MODULES += precompiled_sepolicy precompiled_sepolicy.plat.sha256
+LOCAL_REQUIRED_MODULES += precompiled_sepolicy precompiled_sepolicy.plat_and_mapping.sha256
 endif
 
 else
@@ -92,11 +92,15 @@ PLAT_PRIVATE_POLICY := $(LOCAL_PATH)/private
 PLAT_VENDOR_POLICY := $(LOCAL_PATH)/vendor
 REQD_MASK_POLICY := $(LOCAL_PATH)/reqd_mask
 
+# The current version of the platform sepolicy.
+# TODO: This must be fetched from build system after b/36783775
+PLAT_PUBLIC_POLICY_CURRENT_VERSION := 100000.0
+
 # TODO: move to README when doing the README update and finalizing versioning.
-# BOARD_SEPOLICY_VERS should contain the platform version identifier
-#  corresponding to the platform on which the non-platform policy is to be
-#  based.  If unspecified, this will build against the current public platform
-#  policy in tree.
+# BOARD_SEPOLICY_VERS must take the format "NN.m" and contain the sepolicy
+# version identifier corresponding to the sepolicy on which the non-platform
+# policy is to be based. If unspecified, this will build against the current
+# public platform policy in tree
 # BOARD_SEPOLICY_VERS_DIR should contain the public platform policy which
 #  is associated with the given BOARD_SEPOLICY_VERS.  The policy therein will be
 #  versioned according to the BOARD_SEPOLICY_VERS identifier and included as
@@ -104,7 +108,8 @@ REQD_MASK_POLICY := $(LOCAL_PATH)/reqd_mask
 #  platform policy does not break non-platform policy.
 ifndef BOARD_SEPOLICY_VERS
 $(warning BOARD_SEPOLICY_VERS not specified, assuming current platform version)
-BOARD_SEPOLICY_VERS := current
+# The default platform policy version.
+BOARD_SEPOLICY_VERS := $(PLAT_PUBLIC_POLICY_CURRENT_VERSION)
 BOARD_SEPOLICY_VERS_DIR := $(PLAT_PUBLIC_POLICY)
 else
 ifndef BOARD_SEPOLICY_VERS_DIR
@@ -310,36 +315,23 @@ plat_policy.conf :=
 #################################
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := plat_sepolicy.cil.sha256
-LOCAL_MODULE_CLASS := ETC
-LOCAL_MODULE_TAGS := optional
-LOCAL_MODULE_PATH = $(TARGET_OUT)/etc/selinux
-
-include $(BUILD_SYSTEM)/base_rules.mk
-
-$(LOCAL_BUILT_MODULE): $(built_plat_cil)
-	sha256sum $^ | cut -d' ' -f1 > $@
-
-#################################
-include $(CLEAR_VARS)
-
 LOCAL_MODULE := mapping_sepolicy.cil
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_TAGS := optional
-LOCAL_PROPRIETARY_MODULE := true
-LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/etc/selinux
+LOCAL_MODULE_PATH := $(TARGET_OUT)/etc/selinux
 
 include $(BUILD_SYSTEM)/base_rules.mk
 
 # auto-generate the mapping file for current platform policy, since it needs to
 # track platform policy development
-current_mapping.cil := $(intermediates)/mapping/current.cil
-$(current_mapping.cil) : PRIVATE_VERS := $(BOARD_SEPOLICY_VERS)
+current_mapping.cil := $(intermediates)/mapping/$(PLAT_PUBLIC_POLICY_CURRENT_VERSION).cil
+$(current_mapping.cil) : PRIVATE_VERS := $(PLAT_PUBLIC_POLICY_CURRENT_VERSION)
 $(current_mapping.cil) : $(plat_pub_policy.cil) $(HOST_OUT_EXECUTABLES)/version_policy
 	@mkdir -p $(dir $@)
 	$(hide) $(HOST_OUT_EXECUTABLES)/version_policy -b $< -m -n $(PRIVATE_VERS) -o $@
 
-ifeq ($(BOARD_SEPOLICY_VERS), current)
+
+ifeq ($(BOARD_SEPOLICY_VERS), $(PLAT_PUBLIC_POLICY_CURRENT_VERSION))
 mapping_policy_nvr := $(current_mapping.cil)
 else
 mapping_policy_nvr := $(addsuffix /$(BOARD_SEPOLICY_VERS).cil, $(PLAT_PRIVATE_POLICY)/mapping)
@@ -353,6 +345,19 @@ $(LOCAL_BUILT_MODULE): $(mapping_policy_nvr)
 
 built_mapping_cil := $(LOCAL_BUILT_MODULE)
 current_mapping.cil :=
+
+#################################
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := plat_and_mapping_sepolicy.cil.sha256
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_PATH = $(TARGET_OUT)/etc/selinux
+
+include $(BUILD_SYSTEM)/base_rules.mk
+
+$(LOCAL_BUILT_MODULE): $(built_plat_cil) $(built_mapping_cil)
+	cat $^ | sha256sum | cut -d' ' -f1 > $@
 
 #################################
 include $(CLEAR_VARS)
@@ -444,10 +449,11 @@ $(built_plat_cil) $(built_mapping_cil) $(built_nonplat_cil)
 built_precompiled_sepolicy := $(LOCAL_BUILT_MODULE)
 
 #################################
-# SHA-256 digest of the plat_sepolicy.cil file against which precompiled_policy was built.
+# SHA-256 digest of the plat_sepolicy.cil and mapping_sepolicy.cil files against
+# which precompiled_policy was built.
 #################################
 include $(CLEAR_VARS)
-LOCAL_MODULE := precompiled_sepolicy.plat.sha256
+LOCAL_MODULE := precompiled_sepolicy.plat_and_mapping.sha256
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_TAGS := optional
 LOCAL_PROPRIETARY_MODULE := true
@@ -455,9 +461,9 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/etc/selinux
 
 include $(BUILD_SYSTEM)/base_rules.mk
 
-$(LOCAL_BUILT_MODULE): PRIVATE_CIL_FILE := $(built_plat_cil)
-$(LOCAL_BUILT_MODULE): $(built_precompiled_sepolicy) $(built_plat_cil)
-	sha256sum $(PRIVATE_CIL_FILE) | cut -d' ' -f1 > $@
+$(LOCAL_BUILT_MODULE): PRIVATE_CIL_FILES := $(built_plat_cil) $(built_mapping_cil)
+$(LOCAL_BUILT_MODULE): $(built_precompiled_sepolicy) $(built_plat_cil) $(built_mapping_cil)
+	cat $(PRIVATE_CIL_FILES) | sha256sum | cut -d' ' -f1 > $@
 
 #################################
 include $(CLEAR_VARS)
@@ -562,17 +568,17 @@ plat_policy.recovery.conf :=
 
 # auto-generate the mapping file for current platform policy, since it needs to
 # track platform policy development
-current_mapping.recovery.cil := $(intermediates)/mapping/current.recovery.cil
-$(current_mapping.recovery.cil) : PRIVATE_VERS := $(BOARD_SEPOLICY_VERS)
+current_mapping.recovery.cil := $(intermediates)/mapping/$(PLAT_PUBLIC_POLICY_CURRENT_VERSION).recovery.cil
+$(current_mapping.recovery.cil) : PRIVATE_VERS := $(PLAT_PUBLIC_POLICY_CURRENT_VERSION)
 $(current_mapping.recovery.cil) : $(plat_pub_policy.recovery.cil) $(HOST_OUT_EXECUTABLES)/version_policy
 	@mkdir -p $(dir $@)
 	$(hide) $(HOST_OUT_EXECUTABLES)/version_policy -b $< -m -n $(PRIVATE_VERS) -o $@
 
-ifeq ($(BOARD_SEPOLICY_VERS), current)
+ifeq ($(BOARD_SEPOLICY_VERS), $(PLAT_PUBLIC_POLICY_CURRENT_VERSION))
 mapping_policy_nvr.recovery := $(current_mapping.recovery.cil)
 else
 mapping_policy_nvr.recovery := $(addsuffix /$(BOARD_SEPOLICY_VERS).recovery.cil, \
-$(PLAT_PRIVATE_POLICY)/mapping)
+                               $(PLAT_PRIVATE_POLICY)/mapping)
 endif
 
 current_mapping.recovery.cil :=
@@ -648,6 +654,9 @@ mapping_policy_nvr.recovery :=
 nonplat_policy_nvr.recovery :=
 
 ##################################
+# SELinux policy embedded into CTS.
+# CTS checks neverallow rules of this policy against the policy of the device under test.
+##################################
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := general_sepolicy.conf
@@ -667,27 +676,9 @@ $(PLAT_PUBLIC_POLICY) $(PLAT_PRIVATE_POLICY))
 		-D target_with_dexpreopt=$(WITH_DEXPREOPT) \
 		-D target_arch=$(PRIVATE_TGT_ARCH) \
 		-D target_with_asan=false \
+		-D target_full_treble=cts \
 		-s $^ > $@
 	$(hide) sed '/dontaudit/d' $@ > $@.dontaudit
-
-built_general_sepolicy.conf := $(LOCAL_BUILT_MODULE)
-exp_sepolicy_build_files :=
-
-##################################
-include $(CLEAR_VARS)
-
-LOCAL_MODULE := sepolicy.general
-LOCAL_MODULE_CLASS := ETC
-LOCAL_MODULE_TAGS := tests
-
-include $(BUILD_SYSTEM)/base_rules.mk
-
-$(LOCAL_BUILT_MODULE): PRIVATE_BUILT_SEPOLICY.CONF := $(built_general_sepolicy.conf)
-$(LOCAL_BUILT_MODULE): $(built_general_sepolicy.conf) $(HOST_OUT_EXECUTABLES)/checkpolicy
-	@mkdir -p $(dir $@)
-	$(hide) $(HOST_OUT_EXECUTABLES)/checkpolicy -M -c $(POLICYVERS) -o $@ $(PRIVATE_BUILT_SEPOLICY.CONF) > /dev/null
-
-built_general_sepolicy := $(LOCAL_BUILT_MODULE)
 
 ##################################
 # TODO - remove this.   Keep around until we get the filesystem creation stuff taken care of.
@@ -1067,6 +1058,37 @@ nonplat_service_contexts.tmp :=
 ##################################
 include $(CLEAR_VARS)
 
+LOCAL_MODULE := vndservice_contexts
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_TAGS := optional
+ifeq ($(PRODUCT_FULL_TREBLE),true)
+LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/etc/selinux
+else
+LOCAL_MODULE_PATH := $(TARGET_ROOT_OUT)
+endif
+
+include $(BUILD_SYSTEM)/base_rules.mk
+
+vnd_svcfiles := $(call build_policy, vndservice_contexts, $(PLAT_VENDOR_POLICY) $(BOARD_SEPOLICY_DIRS) $(REQD_MASK_POLICY))
+
+vndservice_contexts.tmp := $(intermediates)/vndservice_contexts.tmp
+$(vndservice_contexts.tmp): PRIVATE_SVC_FILES := $(vnd_svcfiles)
+$(vndservice_contexts.tmp): PRIVATE_ADDITIONAL_M4DEFS := $(LOCAL_ADDITIONAL_M4DEFS)
+$(vndservice_contexts.tmp): $(vnd_svcfiles)
+	@mkdir -p $(dir $@)
+	$(hide) m4 -s $(PRIVATE_ADDITIONAL_M4DEFS) $(PRIVATE_SVC_FILES) > $@
+
+$(LOCAL_BUILT_MODULE): PRIVATE_SEPOLICY := $(built_sepolicy)
+$(LOCAL_BUILT_MODULE): $(vndservice_contexts.tmp) $(built_sepolicy) $(HOST_OUT_EXECUTABLES)/checkfc $(ACP)
+	@mkdir -p $(dir $@)
+	sed -e 's/#.*$$//' -e '/^$$/d' $< > $@
+	$(hide) $(HOST_OUT_EXECUTABLES)/checkfc -e -v $(PRIVATE_SEPOLICY) $@
+
+vnd_svcfiles :=
+vndservice_contexts.tmp :=
+##################################
+include $(CLEAR_VARS)
+
 LOCAL_MODULE := plat_mac_permissions.xml
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_TAGS := optional
@@ -1133,8 +1155,6 @@ build_device_policy :=
 build_policy :=
 built_plat_fc :=
 built_nonplat_fc :=
-built_general_sepolicy :=
-built_general_sepolicy.conf :=
 built_nl :=
 built_plat_cil :=
 built_mapping_cil :=

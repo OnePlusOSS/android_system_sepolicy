@@ -181,6 +181,8 @@ typeattribute $1 $2_client;
 typeattribute $1 $2;
 # Find passthrough HAL implementations
 allow $2 system_file:dir r_dir_perms;
+allow $2 vendor_file:dir r_dir_perms;
+allow $2 vendor_file:file { read open getattr execute };
 ')
 
 #####################################
@@ -197,6 +199,8 @@ typeattribute $1 $2_client;
 typeattribute $1 $2;
 # Find passthrough HAL implementations
 allow $2 system_file:dir r_dir_perms;
+allow $2 vendor_file:dir r_dir_perms;
+allow $2 vendor_file:file { read open getattr execute };
 ')
 
 #####################################
@@ -282,13 +286,6 @@ allow hwservicemanager $1:binder { call transfer };
 allow hwservicemanager $1:dir search;
 allow hwservicemanager $1:file { read open };
 allow hwservicemanager $1:process getattr;
-# TODO(b/34274385): hals wait for data to be mounted so they can
-# start only if persist.hal.binderization is enabled. (for dogfood
-# stability). getService must also check for data to be mounted
-# if the vintf promises the hal will be registered over hwbinder.
-get_prop($1, hal_binderization_prop)
-get_prop($1, persistent_properties_ready_prop)
-get_prop($1, vold_prop)
 # rw access to /dev/hwbinder and /dev/ashmem is presently granted to
 # all domains in domain.te.
 ')
@@ -390,7 +387,12 @@ define(`recovery_only', ifelse(target_recovery, `true', $1, ))
 # Full TREBLE only
 # SELinux rules which apply only to full TREBLE devices
 #
-define(`full_treble_only', ifelse(target_full_treble, `true', $1, ))
+define(`full_treble_only', ifelse(target_full_treble, `true', $1,
+ifelse(target_full_treble, `cts',
+# BEGIN_TREBLE_ONLY -- this marker is used by CTS -- do not modify
+$1
+# END_TREBLE_ONLY -- this marker is used by CTS -- do not modify
+, )))
 
 #####################################
 # Not full TREBLE
