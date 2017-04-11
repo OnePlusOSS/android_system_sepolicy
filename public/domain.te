@@ -119,18 +119,22 @@ allow domain vendor_hal_file:dir r_dir_perms;
 allow domain same_process_hal_file:dir r_dir_perms;
 allow domain same_process_hal_file:file { execute read open getattr };
 
-# Any process can load vndk-stable libraries, which are system libraries
+# Any process can load vndk-sp libraries, which are system libraries
 # used by same process HALs
-allow domain vndk_stable_file:dir r_dir_perms;
-allow domain vndk_stable_file:file { execute read open getattr };
+allow domain vndk_sp_file:dir r_dir_perms;
+allow domain vndk_sp_file:file { execute read open getattr };
 
 # All domains get access to /vendor/etc
 allow domain vendor_configs_file:dir r_dir_perms;
 allow domain vendor_configs_file:file { read open getattr };
 
 full_treble_only(`
-    # This is required "most likely" for LD_LIBRARY_PATH
-    # (b/36681074)
+    # Allow all domains to be able to follow /system/vendor symlink
+    allow domain vendor_file:lnk_file { getattr open read };
+
+    # This is required to be able to search & read /vendor/lib64
+    # in order to lookup vendor libraries. The execute permission
+    # for coredomains is granted *only* for same process HALs
     allow domain vendor_file:dir { getattr search };
 
     # Allow reading and executing out of /vendor to all vendor domains
@@ -546,7 +550,7 @@ full_treble_only(`
     -coredata_in_vendor_violators
   }
     core_data_file_type
-    -zoneinfo_data_file # VNDK stable API provided by libc
+    -zoneinfo_data_file # Stable API provided by libc
   :{
     file_class_set
   } ~{ append getattr ioctl read write };
@@ -561,7 +565,7 @@ full_treble_only(`
   } {
     core_data_file_type
     -system_data_file
-    -zoneinfo_data_file # VNDK stable API provided by libc
+    -zoneinfo_data_file # Stable API provided by libc
   }:dir *;
   neverallow {
     domain
@@ -994,7 +998,7 @@ neverallow {
 # Enforce restrictions on kernel module origin.
 # Do not allow kernel module loading except from system,
 # vendor, and boot partitions.
-neverallow * ~{ system_file vendor_file_type rootfs }:system module_load;
+neverallow * ~{ system_file vendor_file rootfs }:system module_load;
 
 # Only allow filesystem caps to be set at build time or
 # during upgrade by recovery.
