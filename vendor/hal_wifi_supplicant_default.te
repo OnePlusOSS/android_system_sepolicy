@@ -1,7 +1,7 @@
 # wpa supplicant or equivalent
 type hal_wifi_supplicant_default, domain;
 hal_server_domain(hal_wifi_supplicant_default, hal_wifi_supplicant)
-type hal_wifi_supplicant_default_exec, exec_type, file_type;
+type hal_wifi_supplicant_default_exec, exec_type, vendor_file_type, file_type;
 init_daemon_domain(hal_wifi_supplicant_default)
 
 net_domain(hal_wifi_supplicant_default)
@@ -11,8 +11,3 @@ type_transition hal_wifi_supplicant_default wifi_data_file:dir wpa_socket "socke
 # Allow wpa_supplicant to talk to Wifi Keystore HwBinder service.
 hwbinder_use(hal_wifi_supplicant_default)
 binder_call(hal_wifi_supplicant_default, wifi_keystore_service_server)
-
-# TODO (b/36645291) Move hal_wifi_supplicant's data access to /data/vendor
-# Remove coredata_in_vendor_violators attribute.
-# wpa supplicant or equivalent
-typeattribute hal_wifi_supplicant_default coredata_in_vendor_violators;

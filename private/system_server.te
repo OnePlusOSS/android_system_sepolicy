@@ -18,6 +18,10 @@ allow system_server zygote_tmpfs:file read;
 # For art.
 allow system_server dalvikcache_data_file:dir r_dir_perms;
 allow system_server dalvikcache_data_file:file { r_file_perms execute };
+userdebug_or_eng(`
+  # Report dalvikcache_data_file:file execute violations.
+  auditallow system_server dalvikcache_data_file:file execute;
+')
 
 # /data/resource-cache
 allow system_server resourcecache_data_file:file r_file_perms;
@@ -183,6 +187,7 @@ hal_client_domain(system_server, hal_power)
 hal_client_domain(system_server, hal_sensors)
 binder_call(system_server, hal_thermal)
 hal_client_domain(system_server, hal_thermal)
+hal_client_domain(system_server, hal_tv_cec)
 hal_client_domain(system_server, hal_tv_input)
 binder_call(system_server, hal_usb)
 hal_client_domain(system_server, hal_usb)
@@ -192,12 +197,10 @@ binder_call(system_server, hal_vr)
 hal_client_domain(system_server, hal_vr)
 hal_client_domain(system_server, hal_wifi)
 
-# TODO(b/34274385): Remove this once Wi-Fi Supplicant HAL is guaranteed to be binderized on full
-# Treble devices. Passthrough Wi-Fi Supplicant HAL makes system_server touch wpa_socket which is a
-# vendor type. system_server, being a non-vendor component, is not permitted to touch that socket.
-typeattribute system_server socket_between_core_and_vendor_violators;
-
 hal_client_domain(system_server, hal_wifi_supplicant)
+
+# Talk with graphics composer fences
+allow system_server hal_graphics_composer:fd use;
 
 # Talk to tombstoned to get ANR traces.
 unix_socket_connect(system_server, tombstoned_intercept, tombstoned)

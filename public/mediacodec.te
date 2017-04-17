@@ -1,6 +1,6 @@
 # mediacodec - audio and video codecs live here
 type mediacodec, domain;
-type mediacodec_exec, exec_type, file_type;
+type mediacodec_exec, exec_type, vendor_file_type, file_type;
 
 typeattribute mediacodec mlstrustedsubject;
 
@@ -8,10 +8,20 @@ typeattribute mediacodec mlstrustedsubject;
 # and use macro hal_server_domain
 get_prop(mediacodec, hwservicemanager_prop)
 
-binder_use(mediacodec)
+full_treble_only(`
+    # on full-Treble devices, route all /dev/binder traffic to /dev/vndbinder
+    vndbinder_use(mediacodec)
+')
+not_full_treble(`
+    # on legacy devices, continue to allow /dev/binder traffic
+    binder_use(mediacodec)
+')
 binder_call(mediacodec, binderservicedomain)
 binder_call(mediacodec, appdomain)
 binder_service(mediacodec)
+
+# Allow mediacodec access to composer sync fences
+allow mediacodec hal_graphics_composer:fd use;
 
 # TODO(b/36604251): Remove this once OMX HAL stops using Binder
 typeattribute mediacodec binder_in_vendor_violators;

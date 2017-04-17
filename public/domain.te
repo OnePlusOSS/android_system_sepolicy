@@ -212,6 +212,15 @@ allowxperm domain domain:{ unix_dgram_socket unix_stream_socket }
 # separately.
 allowxperm domain devpts:chr_file ioctl unpriv_tty_ioctls;
 
+# TODO(b/34454312) remove this when the correct policy is in place
+allow domain default_android_hwservice:hwservice_manager { add find };
+# Workaround for policy compiler being too aggressive and removing hwservice_manager_type
+# when it's not explicitly used in allow rules
+allow { domain -domain } hwservice_manager_type:hwservice_manager { add find };
+# Workaround for policy compiler being too aggressive and removing vndservice_manager_type
+# when it's not explicitly used in allow rules
+allow { domain -domain } vndservice_manager_type:vndservice_manager { add find };
+
 ###
 ### neverallow rules
 ###
@@ -536,64 +545,6 @@ full_treble_only(`
   } servicemanager:binder { call transfer };
 ')
 
-##
-# On full TREBLE devices core android components and vendor components may
-# not directly access each other's data types. All communication must occur
-# over HW binder. Open file descriptors may be passed and read/write/stat
-# operations my be performed on those FDs. Disallow all other operations.
-full_treble_only(`
-  # do not allow vendor component access to coredomains data types
-  neverallow {
-    domain
-    -coredomain
-    -appdomain
-    -coredata_in_vendor_violators
-  }
-    core_data_file_type
-    -zoneinfo_data_file # Stable API provided by libc
-  :{
-    file_class_set
-  } ~{ append getattr ioctl read write };
-  # do not allow vendor component access to coredomains data directories.
-  # /data has the system_data_file type. Allow all domains to have dir
-  # search permissions which allows path traversal.
-  neverallow {
-    domain
-    -coredomain
-    -appdomain
-    -coredata_in_vendor_violators
-  } {
-    core_data_file_type
-    -system_data_file
-    -zoneinfo_data_file # Stable API provided by libc
-  }:dir *;
-  neverallow {
-    domain
-    -coredomain
-    -appdomain
-    -coredata_in_vendor_violators
-  } system_data_file:dir ~search;
-  # do not allow coredomains to directly access vendor data. Exempt init
-  # because it is responsible for dir/file creation in init.rc scripts.
-  # Also exempt halclientdomain to exclude rules for passthrough mode.
-  neverallow {
-    coredomain
-    -halclientdomain
-    -init
-    -vendordata_in_core_violators
-  } {
-    data_file_type
-    -core_data_file_type
-  }:file_class_set ~{ append getattr ioctl read write };
-  # do not allow coredomain to access vendor data directories.
-  neverallow {
-    coredomain
-    -halclientdomain
-    -init
-    -vendordata_in_core_violators
-    } { data_file_type -core_data_file_type }:dir *;
-')
-
 # On full TREBLE devices, socket communications between core components and vendor components are
 # not permitted.
 full_treble_only(`
@@ -706,7 +657,7 @@ full_treble_only(`
         coredomain
         -appdomain
         -idmap
-	-init
+        -init
         -system_server
         -zygote
     } vendor_overlay_file:dir { getattr open read search };
@@ -715,10 +666,34 @@ full_treble_only(`
         coredomain
         -appdomain
         -idmap
-	-init
+        -init
         -system_server
         -zygote
     } vendor_overlay_file:{ file lnk_file } r_file_perms;
+
+    # Non-vendor domains are not allowed to file execute shell
+    # from vendor
+    neverallow {
+        coredomain
+        -init
+    } vendor_shell_exec:file { execute execute_no_trans };
+
+    # Do not allow vendor components to execute files from system
+    # except for the ones whitelist here.
+    # TODO:(b/36463595) Make this a neverallow
+    userdebug_or_eng(`
+        auditallow {
+            domain
+            -coredomain
+            -appdomain
+            -rild
+        } {
+            exec_type
+            -vendor_file_type
+            -crash_dump_exec
+            -netutils_wrapper_exec
+        }:file { entrypoint execute execute_no_trans };
+    ')
 ')
 
 # Only authorized processes should be writing to files in /data/dalvik-cache

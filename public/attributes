@@ -44,15 +44,6 @@ attribute core_data_file_type;
 # All types in /vendor
 attribute vendor_file_type;
 
-# All vendor domains which violate the requirement of not accessing
-# data outside /data/vendor.
-# TODO(b/34980020): Remove this once there are no violations
-attribute coredata_in_vendor_violators;
-# All core domains which violate the requirement of not accessing vendor
-# owned data.
-# TODO(b/34980020): Remove this once there are no violations
-attribute vendordata_in_core_violators;
-
 # All types use for sysfs files.
 attribute sysfs_type;
 
@@ -228,6 +219,9 @@ attribute hal_telephony_server;
 attribute hal_thermal;
 attribute hal_thermal_client;
 attribute hal_thermal_server;
+attribute hal_tv_cec;
+attribute hal_tv_cec_client;
+attribute hal_tv_cec_server;
 attribute hal_tv_input;
 attribute hal_tv_input_client;
 attribute hal_tv_input_server;
