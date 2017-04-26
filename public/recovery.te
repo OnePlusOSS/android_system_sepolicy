@@ -51,6 +51,9 @@ recovery_only(`
   # Write to /proc/sys/vm/drop_caches
   allow recovery proc_drop_caches:file w_file_perms;
 
+  # Read kernel config through libvintf for OTA matching
+  allow recovery config_gz:file { open read getattr };
+
   # Write to /sys/class/android_usb/android0/enable.
   # TODO: create more specific label?
   allow recovery sysfs:file w_file_perms;
@@ -93,8 +96,7 @@ recovery_only(`
   allow recovery { cache_file cache_recovery_file }:file create_file_perms;
 
   # Read /sys/class/thermal/*/temp for thermal info.
-  allow recovery sysfs_thermal:dir search;
-  allow recovery sysfs_thermal:file r_file_perms;
+  r_dir_file(recovery, sysfs_thermal)
 
   # Read files on /oem.
   r_dir_file(recovery, oemfs);

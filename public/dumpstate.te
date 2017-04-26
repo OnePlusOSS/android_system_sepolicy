@@ -26,6 +26,7 @@ allow dumpstate self:capability {
 #   /system/bin/logcat
 #   /system/bin/dumpsys
 allow dumpstate system_file:file execute_no_trans;
+not_full_treble(`allow dumpstate vendor_file:file execute_no_trans;')
 allow dumpstate toolbox_exec:file rx_file_perms;
 
 # Create and write into /data/anr/
@@ -68,6 +69,7 @@ allow dumpstate {
   hal_audio_server
   hal_bluetooth_server
   hal_camera_server
+  hal_graphics_composer_server
   hal_vr_server
   mediacodec # TODO(b/36375899): hal_omx_server
 }:process signal;
@@ -93,10 +95,9 @@ r_dir_file(dumpstate, cgroup)
 binder_call(dumpstate, binderservicedomain)
 binder_call(dumpstate, { appdomain netd wificond })
 
-# Vibrate the device after we are done collecting the bugreport
-# For binderized mode:
 hal_client_domain(dumpstate, hal_dumpstate)
-binder_call(dumpstate, hal_vibrator)
+hal_client_domain(dumpstate, hal_graphics_allocator)
+# Vibrate the device after we are done collecting the bugreport
 hal_client_domain(dumpstate, hal_vibrator)
 # For passthrough mode:
 allow dumpstate sysfs_vibrator:file { rw_file_perms getattr };
@@ -172,6 +173,7 @@ userdebug_or_eng(`
 
 allow dumpstate { service_manager_type -gatekeeper_service -dumpstate_service -incident_service -virtual_touchpad_service -vr_hwc_service }:service_manager find;
 allow dumpstate servicemanager:service_manager list;
+allow dumpstate hwservicemanager:hwservice_manager list;
 
 allow dumpstate devpts:chr_file rw_file_perms;
 
@@ -183,6 +185,9 @@ set_prop(dumpstate, dumpstate_options_prop)
 
 # Read device's serial number from system properties
 get_prop(dumpstate, serialno_prop)
+
+# Read state of logging-related properties
+get_prop(dumpstate, device_logging_prop)
 
 # Access to /data/media.
 # This should be removed if sdcardfs is modified to alter the secontext for its

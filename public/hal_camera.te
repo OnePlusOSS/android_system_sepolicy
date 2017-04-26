@@ -2,7 +2,8 @@
 binder_call(hal_camera_client, hal_camera_server)
 binder_call(hal_camera_server, hal_camera_client)
 
-add_hwservice(hal_camera_server, hw_camera_provider_ICameraProvider)
+add_hwservice(hal_camera_server, hal_camera_hwservice)
+allow hal_camera_client hal_camera_hwservice:hwservice_manager find;
 
 # access /data/misc/camera
 allow hal_camera camera_data_file:dir create_dir_perms;
@@ -33,4 +34,4 @@ neverallow hal_camera domain:{ tcp_socket udp_socket rawip_socket } *;
 
 # Only camera HAL may directly access the camera and video hardware
 neverallow { halserverdomain -hal_camera_server } camera_device:chr_file *;
-neverallow { halserverdomain -hal_camera_server } video_device:chr_file *;
+neverallow { halserverdomain -coredomain -hal_camera_server } video_device:chr_file *;
