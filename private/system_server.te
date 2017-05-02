@@ -30,6 +30,10 @@ allow system_server resourcecache_data_file:dir r_dir_perms;
 # ptrace to processes in the same domain for debugging crashes.
 allow system_server self:process ptrace;
 
+# Read and delete last_reboot_reason file
+allow system_server reboot_data_file:file { rename r_file_perms unlink };
+allow system_server reboot_data_file:dir { write search open remove_name };
+
 # Child of the zygote.
 allow system_server zygote:fd use;
 allow system_server zygote:process sigchld;
@@ -98,6 +102,7 @@ allow system_server appdomain:process { sigkill signal };
 allow system_server appdomain:process { getsched setsched };
 allow system_server audioserver:process { getsched setsched };
 allow system_server hal_audio:process { getsched setsched };
+allow system_server hal_bluetooth:process { getsched setsched };
 allow system_server cameraserver:process { getsched setsched };
 allow system_server hal_camera:process { getsched setsched };
 allow system_server mediaserver:process { getsched setsched };
@@ -345,6 +350,10 @@ allow system_server radio_data_file:file create_file_perms;
 # Manage /data/misc/systemkeys.
 allow system_server systemkeys_data_file:dir create_dir_perms;
 allow system_server systemkeys_data_file:file create_file_perms;
+
+# Manage /data/misc/textclassifier.
+allow system_server textclassifier_data_file:dir create_dir_perms;
+allow system_server textclassifier_data_file:file create_file_perms;
 
 # Access /data/tombstones.
 allow system_server tombstone_data_file:dir r_dir_perms;

@@ -421,18 +421,13 @@ neverallow * {fs_type -contextmount_type}:filesystem relabelto;
 neverallow { domain -recovery } contextmount_type:dir_file_class_set
     { create write setattr relabelfrom relabelto append unlink link rename };
 
-# Do not allow service_manager add for default_android_service.
+# Do not allow service_manager add for default service labels.
 # Instead domains should use a more specific type such as
 # system_app_service rather than the generic type.
-# New service_types are defined in service.te and new mappings
-# from service name to service_type are defined in service_contexts.
+# New service_types are defined in {,hw,vnd}service.te and new mappings
+# from service name to service_type are defined in {,hw,vnd}service_contexts.
 neverallow * default_android_service:service_manager add;
-
-# Do not allow hwservice_manager add for default_android_hwservice.
-# Instead domains should use a more specific type such as
-# hal_audio_hwservice rather than the generic type.
-# New service_types are defined in hwservice.te and new mappings
-# from service name to service_type are defined in hwservice_contexts.
+neverallow * default_android_vndservice:service_manager { add find };
 neverallow * default_android_hwservice:hwservice_manager { add find };
 
 # Looking up the base class/interface of all HwBinder services is a bad idea.
@@ -549,6 +544,8 @@ full_treble_only(`
     -nfc_service
     -radio_service
     -surfaceflinger_service
+    -virtual_touchpad_service
+    -vr_hwc_service
     -vr_manager_service
   }:service_manager find;
   neverallow {
@@ -557,6 +554,27 @@ full_treble_only(`
     -appdomain
     -binder_in_vendor_violators # TODO(b/35870313): Remove once all violations are gone
   } servicemanager:binder { call transfer };
+')
+
+# On full TREBLE devices, only vendor components, shell, and su can use VendorBinder.
+full_treble_only(`
+  neverallow {
+    coredomain
+    -shell
+    userdebug_or_eng(`-su')
+    -ueventd # uevent is granted create for this device, but we still neverallow I/O below
+  } vndbinder_device:chr_file rw_file_perms;
+  neverallow ueventd vndbinder_device:chr_file { read write append ioctl };
+  neverallow {
+    coredomain
+    -shell
+    userdebug_or_eng(`-su')
+  } vndservice_manager_type:service_manager *;
+  neverallow {
+    coredomain
+    -shell
+    userdebug_or_eng(`-su')
+  } vndservicemanager:binder *;
 ')
 
 # On full TREBLE devices, socket communications between core components and vendor components are
@@ -672,6 +690,7 @@ full_treble_only(`
         -appdomain
         -idmap
         -init
+        -installd
         -system_server
         -zygote
     } vendor_overlay_file:dir { getattr open read search };
@@ -681,6 +700,7 @@ full_treble_only(`
         -appdomain
         -idmap
         -init
+        -installd
         -system_server
         -zygote
     } vendor_overlay_file:{ file lnk_file } r_file_perms;
@@ -964,26 +984,6 @@ neverallow * domain:file { execute execute_no_trans entrypoint };
 # more specific label.
 # TODO: fix system_server and dumpstate
 neverallow { domain -init -system_server -dumpstate userdebug_or_eng(`-qti_debugfs_domain') } debugfs:file no_rw_file_perms;
-
-neverallow {
-  domain
-  -init
-  -recovery
-  -sdcardd
-  -vold
-} fuse_device:chr_file open;
-neverallow {
-  domain
-  -dumpstate
-  -init
-  -priv_app
-  -recovery
-  -sdcardd
-  -shell # Restricted by shell.te to only getattr
-  -system_server
-  -ueventd
-  -vold
-} fuse_device:chr_file *;
 
 # Profiles contain untrusted data and profman parses that. We should only run
 # in from installd forked processes.
