@@ -25,38 +25,6 @@ sepolicy_major_vers :=
 sepolicy_minor_vers :=
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := selinux_policy
-LOCAL_MODULE_TAGS := optional
-# Include SELinux policy. We do this here because different modules
-# need to be included based on the value of PRODUCT_FULL_TREBLE. This
-# type of conditional inclusion cannot be done in top-level files such
-# as build/target/product/embedded.mk.
-# This conditional inclusion closely mimics the conditional logic
-# inside init/init.cpp for loading SELinux policy from files.
-ifeq ($(PRODUCT_FULL_TREBLE),true)
-# Use split SELinux policy
-LOCAL_REQUIRED_MODULES += \
-    mapping_sepolicy.cil \
-    nonplat_sepolicy.cil \
-    plat_sepolicy.cil \
-    plat_and_mapping_sepolicy.cil.sha256 \
-    secilc \
-    nonplat_file_contexts \
-    plat_file_contexts
-
-# Include precompiled policy, unless told otherwise
-ifneq ($(PRODUCT_PRECOMPILED_SEPOLICY),false)
-LOCAL_REQUIRED_MODULES += precompiled_sepolicy precompiled_sepolicy.plat_and_mapping.sha256
-endif
-
-else
-# Use monolithic SELinux policy
-LOCAL_REQUIRED_MODULES += sepolicy \
-    file_contexts.bin
-endif
-include $(BUILD_PHONY_PACKAGE)
-
-include $(CLEAR_VARS)
 # SELinux policy version.
 # Must be <= /sys/fs/selinux/policyvers reported by the Android kernel.
 # Must be within the compatibility range reported by checkpolicy -V.
@@ -121,21 +89,14 @@ REQD_MASK_POLICY := $(LOCAL_PATH)/reqd_mask
 # version identifier corresponding to the sepolicy on which the non-platform
 # policy is to be based. If unspecified, this will build against the current
 # public platform policy in tree
-# BOARD_SEPOLICY_VERS_DIR should contain the public platform policy which
-#  is associated with the given BOARD_SEPOLICY_VERS.  The policy therein will be
-#  versioned according to the BOARD_SEPOLICY_VERS identifier and included as
-#  part of the non-platform policy to ensure removal of access in future
-#  platform policy does not break non-platform policy.
 ifndef BOARD_SEPOLICY_VERS
 $(warning BOARD_SEPOLICY_VERS not specified, assuming current platform version)
 # The default platform policy version.
 BOARD_SEPOLICY_VERS := $(PLATFORM_SEPOLICY_VERSION)
-BOARD_SEPOLICY_VERS_DIR := $(PLAT_PUBLIC_POLICY)
-else
-ifndef BOARD_SEPOLICY_VERS_DIR
-$(error BOARD_SEPOLICY_VERS_DIR not specified for versioned sepolicy.)
 endif
-endif
+
+
+platform_mapping_file := $(BOARD_SEPOLICY_VERS).cil
 
 ###########################################################
 # Compute policy files to be used in policy build.
@@ -197,6 +158,40 @@ ifneq (,$(filter address,$(SANITIZE_TARGET)))
   with_asan := true
 endif
 
+include $(CLEAR_VARS)
+LOCAL_MODULE := selinux_policy
+LOCAL_MODULE_TAGS := optional
+# Include SELinux policy. We do this here because different modules
+# need to be included based on the value of PRODUCT_FULL_TREBLE. This
+# type of conditional inclusion cannot be done in top-level files such
+# as build/target/product/embedded.mk.
+# This conditional inclusion closely mimics the conditional logic
+# inside init/init.cpp for loading SELinux policy from files.
+ifeq ($(PRODUCT_FULL_TREBLE),true)
+
+# Use split SELinux policy
+LOCAL_REQUIRED_MODULES += \
+    $(platform_mapping_file) \
+    nonplat_sepolicy.cil \
+    plat_sepolicy.cil \
+    plat_and_mapping_sepolicy.cil.sha256 \
+    secilc \
+    nonplat_file_contexts \
+    plat_file_contexts \
+    plat_sepolicy_vers.txt
+
+# Include precompiled policy, unless told otherwise
+ifneq ($(PRODUCT_PRECOMPILED_SEPOLICY),false)
+LOCAL_REQUIRED_MODULES += precompiled_sepolicy precompiled_sepolicy.plat_and_mapping.sha256
+endif
+
+else
+# Use monolithic SELinux policy
+LOCAL_REQUIRED_MODULES += sepolicy \
+    file_contexts.bin
+endif
+include $(BUILD_PHONY_PACKAGE)
+
 ##################################
 # reqd_policy_mask - a policy.conf file which contains only the bare minimum
 # policy necessary to use checkpolicy.  This bare-minimum policy needs to be
@@ -242,7 +237,7 @@ $(plat_pub_policy.conf): PRIVATE_TGT_ARCH := $(my_target_arch)
 $(plat_pub_policy.conf): PRIVATE_TGT_WITH_ASAN := $(with_asan)
 $(plat_pub_policy.conf): PRIVATE_ADDITIONAL_M4DEFS := $(LOCAL_ADDITIONAL_M4DEFS)
 $(plat_pub_policy.conf): $(call build_policy, $(sepolicy_build_files), \
-$(BOARD_SEPOLICY_VERS_DIR) $(REQD_MASK_POLICY))
+$(PLAT_PUBLIC_POLICY) $(REQD_MASK_POLICY))
 	@mkdir -p $(dir $@)
 	 $(hide) m4 $(PRIVATE_ADDITIONAL_M4DEFS) \
 		-D mls_num_sens=$(PRIVATE_MLS_SENS) -D mls_num_cats=$(PRIVATE_MLS_CATS) \
@@ -310,24 +305,15 @@ $(PLAT_PUBLIC_POLICY) $(PLAT_PRIVATE_POLICY))
 		-s $^ > $@
 	$(hide) sed '/dontaudit/d' $@ > $@.dontaudit
 
-plat_policy_nvr := $(intermediates)/plat_policy_nvr.cil
-$(plat_policy_nvr): PRIVATE_ADDITIONAL_CIL_FILES := \
+$(LOCAL_BUILT_MODULE): PRIVATE_ADDITIONAL_CIL_FILES := \
   $(call build_policy, $(sepolicy_build_cil_workaround_files), $(PLAT_PRIVATE_POLICY))
-$(plat_policy_nvr): $(plat_policy.conf) $(HOST_OUT_EXECUTABLES)/checkpolicy \
+$(LOCAL_BUILT_MODULE): $(plat_policy.conf) $(HOST_OUT_EXECUTABLES)/checkpolicy \
+  $(HOST_OUT_EXECUTABLES)/secilc \
   $(call build_policy, $(sepolicy_build_cil_workaround_files), $(PLAT_PRIVATE_POLICY))
 	@mkdir -p $(dir $@)
 	$(hide) $(HOST_OUT_EXECUTABLES)/checkpolicy -M -C -c $(POLICYVERS) -o $@ $<
 	$(hide) cat $(PRIVATE_ADDITIONAL_CIL_FILES) >> $@
-
-$(LOCAL_BUILT_MODULE): PRIVATE_CIL_FILES := $(plat_policy_nvr)
-$(LOCAL_BUILT_MODULE): $(HOST_OUT_EXECUTABLES)/secilc $(plat_policy_nvr)
-	@mkdir -p $(dir $@)
-	# Strip out neverallow statements. They aren't needed on-device and their presence
-	# significantly slows down on-device compilation (e.g., from 400 ms to 6,400 ms on
-	# sailfish-eng).
-	grep -v '^(neverallow' $(PRIVATE_CIL_FILES) > $@
-	# Confirm that the resulting policy compiles
-	$(hide) $(HOST_OUT_EXECUTABLES)/secilc -M true -c $(POLICYVERS) $@ -o /dev/null -f /dev/null
+	$(hide) $(HOST_OUT_EXECUTABLES)/secilc -M true -G -N -c $(POLICYVERS) $@ -o /dev/null -f /dev/null
 
 built_plat_cil := $(LOCAL_BUILT_MODULE)
 plat_policy.conf :=
@@ -335,10 +321,26 @@ plat_policy.conf :=
 #################################
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := mapping_sepolicy.cil
+LOCAL_MODULE := plat_sepolicy_vers.txt
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_TAGS := optional
-LOCAL_MODULE_PATH := $(TARGET_OUT)/etc/selinux
+LOCAL_PROPRIETARY_MODULE := true
+LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/etc/selinux
+
+include $(BUILD_SYSTEM)/base_rules.mk
+
+$(LOCAL_BUILT_MODULE) : PRIVATE_PLAT_SEPOL_VERS := $(BOARD_SEPOLICY_VERS)
+$(LOCAL_BUILT_MODULE) :
+	mkdir -p $(dir $@)
+	echo $(PRIVATE_PLAT_SEPOL_VERS) > $@
+
+#################################
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := $(platform_mapping_file)
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_PATH := $(TARGET_OUT)/etc/selinux/mapping
 
 include $(BUILD_SYSTEM)/base_rules.mk
 
@@ -352,16 +354,13 @@ $(current_mapping.cil) : $(plat_pub_policy.cil) $(HOST_OUT_EXECUTABLES)/version_
 
 
 ifeq ($(BOARD_SEPOLICY_VERS), $(PLATFORM_SEPOLICY_VERSION))
-mapping_policy_nvr := $(current_mapping.cil)
+mapping_policy := $(current_mapping.cil)
 else
-mapping_policy_nvr := $(addsuffix /$(BOARD_SEPOLICY_VERS).cil, $(PLAT_PRIVATE_POLICY)/mapping)
+mapping_policy := $(addsuffix /$(BOARD_SEPOLICY_VERS).cil, $(PLAT_PRIVATE_POLICY)/mapping)
 endif
 
-$(LOCAL_BUILT_MODULE): $(mapping_policy_nvr)
-	# Strip out neverallow statements. They aren't needed on-device and their presence
-	# significantly slows down on-device compilation (e.g., from 400 ms to 6,400 ms on
-	# sailfish-eng).
-	grep -v '^(neverallow' $< > $@
+$(LOCAL_BUILT_MODULE): $(mapping_policy) $(ACP)
+	$(hide) $(ACP) $< $@
 
 built_mapping_cil := $(LOCAL_BUILT_MODULE)
 current_mapping.cil :=
@@ -402,7 +401,7 @@ $(nonplat_policy.conf): PRIVATE_TGT_ARCH := $(my_target_arch)
 $(nonplat_policy.conf): PRIVATE_TGT_WITH_ASAN := $(with_asan)
 $(nonplat_policy.conf): PRIVATE_ADDITIONAL_M4DEFS := $(LOCAL_ADDITIONAL_M4DEFS)
 $(nonplat_policy.conf): $(call build_policy, $(sepolicy_build_files), \
-$(BOARD_SEPOLICY_VERS_DIR) $(REQD_MASK_POLICY) $(PLAT_VENDOR_POLICY) $(BOARD_SEPOLICY_DIRS))
+$(PLAT_PUBLIC_POLICY) $(REQD_MASK_POLICY) $(PLAT_VENDOR_POLICY) $(BOARD_SEPOLICY_DIRS))
 	@mkdir -p $(dir $@)
 	$(hide) m4 $(PRIVATE_ADDITIONAL_M4DEFS) \
 		-D mls_num_sens=$(PRIVATE_MLS_SENS) -D mls_num_cats=$(PRIVATE_MLS_CATS) \
@@ -423,25 +422,15 @@ $(reqd_policy_mask.cil)
 	$(hide) $< -C -M -c $(POLICYVERS) -o $@.tmp $(PRIVATE_POL_CONF)
 	$(hide) grep -Fxv -f $(PRIVATE_REQD_MASK) $@.tmp > $@
 
-nonplat_policy_nvr := $(intermediates)/nonplat_policy_nvr.cil
-$(nonplat_policy_nvr) : PRIVATE_VERS := $(BOARD_SEPOLICY_VERS)
-$(nonplat_policy_nvr) : PRIVATE_TGT_POL := $(nonplat_policy_raw)
-$(nonplat_policy_nvr) : $(plat_pub_policy.cil) $(nonplat_policy_raw) \
-$(HOST_OUT_EXECUTABLES)/version_policy
+$(LOCAL_BUILT_MODULE) : PRIVATE_VERS := $(BOARD_SEPOLICY_VERS)
+$(LOCAL_BUILT_MODULE) : PRIVATE_TGT_POL := $(nonplat_policy_raw)
+$(LOCAL_BUILT_MODULE) : PRIVATE_DEP_CIL_FILES := $(built_plat_cil) $(built_mapping_cil)
+$(LOCAL_BUILT_MODULE) : $(plat_pub_policy.cil) $(nonplat_policy_raw) \
+$(HOST_OUT_EXECUTABLES)/version_policy $(HOST_OUT_EXECUTABLES)/secilc \
+$(built_plat_cil) $(built_mapping_cil)
 	@mkdir -p $(dir $@)
 	$(HOST_OUT_EXECUTABLES)/version_policy -b $< -t $(PRIVATE_TGT_POL) -n $(PRIVATE_VERS) -o $@
-
-$(LOCAL_BUILT_MODULE): PRIVATE_NONPLAT_CIL_FILES := $(nonplat_policy_nvr)
-$(LOCAL_BUILT_MODULE): PRIVATE_DEP_CIL_FILES := $(built_plat_cil) $(built_mapping_cil)
-$(LOCAL_BUILT_MODULE): $(HOST_OUT_EXECUTABLES)/secilc $(nonplat_policy_nvr) $(built_plat_cil) \
-$(built_mapping_cil)
-	@mkdir -p $(dir $@)
-	# Strip out neverallow statements. They aren't needed on-device and their presence
-	# significantly slows down on-device compilation (e.g., from 400 ms to 6,400 ms on
-	# sailfish-eng).
-	grep -v '^(neverallow' $(PRIVATE_NONPLAT_CIL_FILES) > $@
-	# Confirm that the resulting policy compiles combined with platform and mapping policies
-	$(hide) $(HOST_OUT_EXECUTABLES)/secilc -M true -c $(POLICYVERS) \
+	$(hide) $(HOST_OUT_EXECUTABLES)/secilc -M true -G -N -c $(POLICYVERS) \
 		$(PRIVATE_DEP_CIL_FILES) $@ -o /dev/null -f /dev/null
 
 built_nonplat_cil := $(LOCAL_BUILT_MODULE)
@@ -463,7 +452,7 @@ $(LOCAL_BUILT_MODULE): PRIVATE_CIL_FILES := \
 $(built_plat_cil) $(built_mapping_cil) $(built_nonplat_cil)
 $(LOCAL_BUILT_MODULE): $(HOST_OUT_EXECUTABLES)/secilc \
 $(built_plat_cil) $(built_mapping_cil) $(built_nonplat_cil)
-	$(hide) $(HOST_OUT_EXECUTABLES)/secilc -M true -c $(POLICYVERS) \
+	$(hide) $(HOST_OUT_EXECUTABLES)/secilc -M true -G -c $(POLICYVERS) \
 		$(PRIVATE_CIL_FILES) -o $@ -f /dev/null
 
 built_precompiled_sepolicy := $(LOCAL_BUILT_MODULE)
@@ -497,14 +486,14 @@ LOCAL_MODULE_PATH := $(TARGET_ROOT_OUT)
 include $(BUILD_SYSTEM)/base_rules.mk
 
 all_cil_files := \
-    $(plat_policy_nvr) \
-    $(mapping_policy_nvr) \
-    $(nonplat_policy_nvr) \
+    $(built_plat_cil) \
+    $(built_mapping_cil) \
+    $(built_nonplat_cil)
 
 $(LOCAL_BUILT_MODULE): PRIVATE_CIL_FILES := $(all_cil_files)
 $(LOCAL_BUILT_MODULE): $(HOST_OUT_EXECUTABLES)/secilc $(HOST_OUT_EXECUTABLES)/sepolicy-analyze $(all_cil_files)
 	@mkdir -p $(dir $@)
-	$(hide) $< -M true -c $(POLICYVERS) $(PRIVATE_CIL_FILES) -o $@.tmp -f /dev/null
+	$(hide) $< -M true -G -c $(POLICYVERS) $(PRIVATE_CIL_FILES) -o $@.tmp -f /dev/null
 	$(hide) $(HOST_OUT_EXECUTABLES)/sepolicy-analyze $@.tmp permissive > $@.permissivedomains
 	$(hide) if [ "$(TARGET_BUILD_VARIANT)" = "user" -a -s $@.permissivedomains ]; then \
 		echo "==========" 1>&2; \
@@ -531,43 +520,15 @@ LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)
 
 include $(BUILD_SYSTEM)/base_rules.mk
 
-plat_pub_policy.recovery.conf := $(intermediates)/plat_pub_policy.recovery.conf
-$(plat_pub_policy.recovery.conf): PRIVATE_MLS_SENS := $(MLS_SENS)
-$(plat_pub_policy.recovery.conf): PRIVATE_MLS_CATS := $(MLS_CATS)
-$(plat_pub_policy.recovery.conf): PRIVATE_TGT_ARCH := $(my_target_arch)
-$(plat_pub_policy.recovery.conf): PRIVATE_TGT_WITH_ASAN := $(with_asan)
-$(plat_pub_policy.recovery.conf): PRIVATE_ADDITIONAL_M4DEFS := $(LOCAL_ADDITIONAL_M4DEFS)
-$(plat_pub_policy.recovery.conf): $(call build_policy, $(sepolicy_build_files), \
-$(BOARD_SEPOLICY_VERS_DIR) $(REQD_MASK_POLICY))
-	@mkdir -p $(dir $@)
-	$(hide) m4 $(PRIVATE_ADDITIONAL_M4DEFS) \
-		-D mls_num_sens=$(PRIVATE_MLS_SENS) -D mls_num_cats=$(PRIVATE_MLS_CATS) \
-		-D target_build_variant=$(TARGET_BUILD_VARIANT) \
-		-D target_with_dexpreopt=$(WITH_DEXPREOPT) \
-		-D target_arch=$(PRIVATE_TGT_ARCH) \
-		-D target_with_asan=$(PRIVATE_TGT_WITH_ASAN) \
-		-D target_recovery=true \
-		-s $^ > $@
-
-plat_pub_policy.recovery.cil := $(intermediates)/plat_pub_policy.recovery.cil
-$(plat_pub_policy.recovery.cil): PRIVATE_POL_CONF := $(plat_pub_policy.recovery.conf)
-$(plat_pub_policy.recovery.cil): PRIVATE_REQD_MASK := $(reqd_policy_mask.cil)
-$(plat_pub_policy.recovery.cil): $(HOST_OUT_EXECUTABLES)/checkpolicy \
-$(plat_pub_policy.recovery.conf) $(reqd_policy_mask.cil)
-	@mkdir -p $(dir $@)
-	$(hide) $< -C -M -c $(POLICYVERS) -o $@.tmp $(PRIVATE_POL_CONF)
-	$(hide) grep -Fxv -f $(PRIVATE_REQD_MASK) $@.tmp > $@
-
-plat_pub_policy.recovery.conf :=
-
-plat_policy.recovery.conf := $(intermediates)/plat_policy.recovery.conf
-$(plat_policy.recovery.conf): PRIVATE_MLS_SENS := $(MLS_SENS)
-$(plat_policy.recovery.conf): PRIVATE_MLS_CATS := $(MLS_CATS)
-$(plat_policy.recovery.conf): PRIVATE_TGT_ARCH := $(my_target_arch)
-$(plat_policy.recovery.conf): PRIVATE_TGT_WITH_ASAN := $(with_asan)
-$(plat_policy.recovery.conf): PRIVATE_ADDITIONAL_M4DEFS := $(LOCAL_ADDITIONAL_M4DEFS)
-$(plat_policy.recovery.conf): $(call build_policy, $(sepolicy_build_files), \
-$(PLAT_PUBLIC_POLICY) $(PLAT_PRIVATE_POLICY))
+sepolicy.recovery.conf := $(intermediates)/sepolicy.recovery.conf
+$(sepolicy.recovery.conf): PRIVATE_MLS_SENS := $(MLS_SENS)
+$(sepolicy.recovery.conf): PRIVATE_MLS_CATS := $(MLS_CATS)
+$(sepolicy.recovery.conf): PRIVATE_TGT_ARCH := $(my_target_arch)
+$(sepolicy.recovery.conf): PRIVATE_TGT_WITH_ASAN := $(with_asan)
+$(sepolicy.recovery.conf): PRIVATE_ADDITIONAL_M4DEFS := $(LOCAL_ADDITIONAL_M4DEFS)
+$(sepolicy.recovery.conf): $(call build_policy, $(sepolicy_build_files), \
+                           $(PLAT_PUBLIC_POLICY) $(PLAT_PRIVATE_POLICY) \
+                           $(PLAT_VENDOR_POLICY) $(BOARD_SEPOLICY_DIRS))
 	@mkdir -p $(dir $@)
 	$(hide) m4 $(PRIVATE_ADDITIONAL_M4DEFS) \
 		-D mls_num_sens=$(PRIVATE_MLS_SENS) -D mls_num_cats=$(PRIVATE_MLS_CATS) \
@@ -579,84 +540,10 @@ $(PLAT_PUBLIC_POLICY) $(PLAT_PRIVATE_POLICY))
 		-s $^ > $@
 	$(hide) sed '/dontaudit/d' $@ > $@.dontaudit
 
-plat_policy_nvr.recovery := $(intermediates)/plat_policy_nvr.recovery.cil
-$(plat_policy_nvr.recovery): $(plat_policy.recovery.conf) $(HOST_OUT_EXECUTABLES)/checkpolicy
+$(LOCAL_BUILT_MODULE): $(sepolicy.recovery.conf) $(HOST_OUT_EXECUTABLES)/checkpolicy \
+                       $(HOST_OUT_EXECUTABLES)/sepolicy-analyze
 	@mkdir -p $(dir $@)
-	$(hide) $(HOST_OUT_EXECUTABLES)/checkpolicy -M -C -c $(POLICYVERS) -o $@ $<
-
-plat_policy.recovery.conf :=
-
-# auto-generate the mapping file for current platform policy, since it needs to
-# track platform policy development
-current_mapping.recovery.cil := $(intermediates)/mapping/$(PLATFORM_SEPOLICY_VERSION).recovery.cil
-$(current_mapping.recovery.cil) : PRIVATE_VERS := $(PLATFORM_SEPOLICY_VERSION)
-$(current_mapping.recovery.cil) : $(plat_pub_policy.recovery.cil) $(HOST_OUT_EXECUTABLES)/version_policy
-	@mkdir -p $(dir $@)
-	$(hide) $(HOST_OUT_EXECUTABLES)/version_policy -b $< -m -n $(PRIVATE_VERS) -o $@
-
-ifeq ($(BOARD_SEPOLICY_VERS), $(PLATFORM_SEPOLICY_VERSION))
-mapping_policy_nvr.recovery := $(current_mapping.recovery.cil)
-else
-mapping_policy_nvr.recovery := $(addsuffix /$(BOARD_SEPOLICY_VERS).recovery.cil, \
-                               $(PLAT_PRIVATE_POLICY)/mapping)
-endif
-
-current_mapping.recovery.cil :=
-
-# nonplat_policy.recovery.conf - A combination of the non-platform private,
-# vendor and the exported platform policy associated with the version the
-# non-platform policy targets.  This needs attributization and to be combined
-# with the platform-provided policy.  Like plat_pub_policy.recovery.conf, this
-# needs to make use of the reqd_policy_mask files from private policy in order
-# to use checkpolicy.
-nonplat_policy.recovery.conf := $(intermediates)/nonplat_policy.recovery.conf
-$(nonplat_policy.recovery.conf): PRIVATE_MLS_SENS := $(MLS_SENS)
-$(nonplat_policy.recovery.conf): PRIVATE_MLS_CATS := $(MLS_CATS)
-$(nonplat_policy.recovery.conf): PRIVATE_TGT_ARCH := $(my_target_arch)
-$(nonplat_policy.recovery.conf): PRIVATE_TGT_WITH_ASAN := $(with_asan)
-$(nonplat_policy.recovery.conf): PRIVATE_ADDITIONAL_M4DEFS := $(LOCAL_ADDITIONAL_M4DEFS)
-$(nonplat_policy.recovery.conf): $(call build_policy, $(sepolicy_build_files), \
-$(BOARD_SEPOLICY_VERS_DIR) $(REQD_MASK_POLICY) $(PLAT_VENDOR_POLICY) $(BOARD_SEPOLICY_DIRS))
-	@mkdir -p $(dir $@)
-	$(hide) m4 $(PRIVATE_ADDITIONAL_M4DEFS) \
-		-D mls_num_sens=$(PRIVATE_MLS_SENS) -D mls_num_cats=$(PRIVATE_MLS_CATS) \
-		-D target_build_variant=$(TARGET_BUILD_VARIANT) \
-		-D target_with_dexpreopt=$(WITH_DEXPREOPT) \
-		-D target_arch=$(PRIVATE_TGT_ARCH) \
-		-D target_with_asan=$(PRIVATE_TGT_WITH_ASAN) \
-		-D target_recovery=true \
-		-s $^ > $@
-	$(hide) sed '/dontaudit/d' $@ > $@.dontaudit
-
-nonplat_policy_raw.recovery := $(intermediates)/nonplat_policy_raw.recovery.cil
-$(nonplat_policy_raw.recovery): PRIVATE_POL_CONF := $(nonplat_policy.recovery.conf)
-$(nonplat_policy_raw.recovery): PRIVATE_REQD_MASK := $(reqd_policy_mask.cil)
-$(nonplat_policy_raw.recovery): $(HOST_OUT_EXECUTABLES)/checkpolicy $(nonplat_policy.recovery.conf) \
-$(reqd_policy_mask.cil)
-	@mkdir -p $(dir $@)
-	$(hide) $< -C -M -c $(POLICYVERS) -o $@.tmp $(PRIVATE_POL_CONF)
-	$(hide) grep -Fxv -f $(PRIVATE_REQD_MASK) $@.tmp > $@
-
-nonplat_policy_nvr.recovery := $(intermediates)/nonplat_policy_nvr.recovery.cil
-$(nonplat_policy_nvr.recovery) : PRIVATE_VERS := $(BOARD_SEPOLICY_VERS)
-$(nonplat_policy_nvr.recovery) : PRIVATE_TGT_POL := $(nonplat_policy_raw.recovery)
-$(nonplat_policy_nvr.recovery) : $(plat_pub_policy.recovery.cil) $(nonplat_policy_raw.recovery) \
-$(HOST_OUT_EXECUTABLES)/version_policy
-	@mkdir -p $(dir $@)
-	$(HOST_OUT_EXECUTABLES)/version_policy -b $< -t $(PRIVATE_TGT_POL) -n $(PRIVATE_VERS) -o $@
-
-nonplat_policy.recovery.conf :=
-nonplat_policy_raw.recovery :=
-
-all_cil_files.recovery := \
-    $(plat_policy_nvr.recovery) \
-    $(mapping_policy_nvr.recovery) \
-    $(nonplat_policy_nvr.recovery) \
-
-$(LOCAL_BUILT_MODULE): PRIVATE_CIL_FILES := $(all_cil_files.recovery)
-$(LOCAL_BUILT_MODULE): $(HOST_OUT_EXECUTABLES)/secilc $(HOST_OUT_EXECUTABLES)/sepolicy-analyze $(all_cil_files.recovery)
-	@mkdir -p $(dir $@)
-	$(hide) $< -M true -c $(POLICYVERS) $(PRIVATE_CIL_FILES) -o $@.tmp -f /dev/null
+	$(hide) $(HOST_OUT_EXECUTABLES)/checkpolicy -M -c $(POLICYVERS) -o $@.tmp $<
 	$(hide) $(HOST_OUT_EXECUTABLES)/sepolicy-analyze $@.tmp permissive > $@.permissivedomains
 	$(hide) if [ "$(TARGET_BUILD_VARIANT)" = "user" -a -s $@.permissivedomains ]; then \
 		echo "==========" 1>&2; \
@@ -667,11 +554,7 @@ $(LOCAL_BUILT_MODULE): $(HOST_OUT_EXECUTABLES)/secilc $(HOST_OUT_EXECUTABLES)/se
 		fi
 	$(hide) mv $@.tmp $@
 
-all_cil_files.recovery :=
-plat_pub_policy.recovery.cil :=
-plat_policy_nvr.recovery :=
-mapping_policy_nvr.recovery :=
-nonplat_policy_nvr.recovery :=
+sepolicy.recovery.conf :=
 
 ##################################
 # SELinux policy embedded into CTS.
@@ -934,8 +817,6 @@ $(plat_property_contexts.tmp): PRIVATE_ADDITIONAL_M4DEFS := $(LOCAL_ADDITIONAL_M
 $(plat_property_contexts.tmp): $(plat_pcfiles)
 	@mkdir -p $(dir $@)
 	$(hide) m4 -s $(PRIVATE_ADDITIONAL_M4DEFS) $(PRIVATE_PC_FILES) > $@
-
-
 $(LOCAL_BUILT_MODULE): PRIVATE_SEPOLICY := $(built_sepolicy)
 $(LOCAL_BUILT_MODULE): $(plat_property_contexts.tmp) $(built_sepolicy) $(HOST_OUT_EXECUTABLES)/checkfc
 	@mkdir -p $(dir $@)
@@ -948,7 +829,6 @@ plat_property_contexts.tmp :=
 
 ##################################
 include $(CLEAR_VARS)
-
 LOCAL_MODULE := nonplat_property_contexts
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_TAGS := optional
@@ -997,7 +877,6 @@ $(LOCAL_BUILT_MODULE): $(built_plat_pc)
 
 ##################################
 include $(CLEAR_VARS)
-
 LOCAL_MODULE := nonplat_property_contexts.recovery
 LOCAL_MODULE_STEM := nonplat_property_contexts
 LOCAL_MODULE_CLASS := ETC
@@ -1074,6 +953,70 @@ $(LOCAL_BUILT_MODULE): $(nonplat_service_contexts.tmp) $(built_sepolicy) $(HOST_
 built_nonplat_svc := $(LOCAL_BUILT_MODULE)
 nonplat_svcfiles :=
 nonplat_service_contexts.tmp :=
+
+##################################
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := plat_hwservice_contexts
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_TAGS := optional
+ifeq ($(PRODUCT_FULL_TREBLE),true)
+LOCAL_MODULE_PATH := $(TARGET_OUT)/etc/selinux
+else
+LOCAL_MODULE_PATH := $(TARGET_ROOT_OUT)
+endif
+
+include $(BUILD_SYSTEM)/base_rules.mk
+
+plat_hwsvcfiles := $(call build_policy, hwservice_contexts, $(PLAT_PRIVATE_POLICY))
+
+plat_hwservice_contexts.tmp := $(intermediates)/plat_hwservice_contexts.tmp
+$(plat_hwservice_contexts.tmp): PRIVATE_SVC_FILES := $(plat_hwsvcfiles)
+$(plat_hwservice_contexts.tmp): PRIVATE_ADDITIONAL_M4DEFS := $(LOCAL_ADDITIONAL_M4DEFS)
+$(plat_hwservice_contexts.tmp): $(plat_hwsvcfiles)
+	@mkdir -p $(dir $@)
+	$(hide) m4 -s $(PRIVATE_ADDITIONAL_M4DEFS) $(PRIVATE_SVC_FILES) > $@
+
+$(LOCAL_BUILT_MODULE): PRIVATE_SEPOLICY := $(built_sepolicy)
+$(LOCAL_BUILT_MODULE): $(plat_hwservice_contexts.tmp) $(built_sepolicy) $(HOST_OUT_EXECUTABLES)/checkfc $(ACP)
+	@mkdir -p $(dir $@)
+	sed -e 's/#.*$$//' -e '/^$$/d' $< > $@
+	$(HOST_OUT_EXECUTABLES)/checkfc -e -l $(PRIVATE_SEPOLICY) $@
+
+plat_hwsvcfiles :=
+plat_hwservice_contexts.tmp :=
+
+##################################
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := nonplat_hwservice_contexts
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_TAGS := optional
+ifeq ($(PRODUCT_FULL_TREBLE),true)
+LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/etc/selinux
+else
+LOCAL_MODULE_PATH := $(TARGET_ROOT_OUT)
+endif
+
+include $(BUILD_SYSTEM)/base_rules.mk
+
+nonplat_hwsvcfiles := $(call build_policy, hwservice_contexts, $(PLAT_VENDOR_POLICY) $(BOARD_SEPOLICY_DIRS) $(REQD_MASK_POLICY))
+
+nonplat_hwservice_contexts.tmp := $(intermediates)/nonplat_hwservice_contexts.tmp
+$(nonplat_hwservice_contexts.tmp): PRIVATE_SVC_FILES := $(nonplat_hwsvcfiles)
+$(nonplat_hwservice_contexts.tmp): PRIVATE_ADDITIONAL_M4DEFS := $(LOCAL_ADDITIONAL_M4DEFS)
+$(nonplat_hwservice_contexts.tmp): $(nonplat_hwsvcfiles)
+	@mkdir -p $(dir $@)
+	$(hide) m4 -s $(PRIVATE_ADDITIONAL_M4DEFS) $(PRIVATE_SVC_FILES) > $@
+
+$(LOCAL_BUILT_MODULE): PRIVATE_SEPOLICY := $(built_sepolicy)
+$(LOCAL_BUILT_MODULE): $(nonplat_hwservice_contexts.tmp) $(built_sepolicy) $(HOST_OUT_EXECUTABLES)/checkfc $(ACP)
+	@mkdir -p $(dir $@)
+	sed -e 's/#.*$$//' -e '/^$$/d' $< > $@
+	$(hide) $(HOST_OUT_EXECUTABLES)/checkfc -e -l $(PRIVATE_SEPOLICY) $@
+
+nonplat_hwsvcfiles :=
+nonplat_hwservice_contexts.tmp :=
 
 ##################################
 include $(CLEAR_VARS)
@@ -1187,10 +1130,8 @@ built_precompiled_sepolicy :=
 built_sepolicy :=
 built_plat_svc :=
 built_nonplat_svc :=
-mapping_policy_nvr :=
+mapping_policy :=
 my_target_arch :=
-nonplat_policy_nvr :=
-plat_policy_nvr :=
 plat_pub_policy.cil :=
 reqd_policy_mask.cil :=
 sepolicy_build_files :=

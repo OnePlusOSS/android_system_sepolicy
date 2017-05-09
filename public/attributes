@@ -44,15 +44,6 @@ attribute core_data_file_type;
 # All types in /vendor
 attribute vendor_file_type;
 
-# All vendor domains which violate the requirement of not accessing
-# data outside /data/vendor.
-# TODO(b/34980020): Remove this once there are no violations
-attribute coredata_in_vendor_violators;
-# All core domains which violate the requirement of not accessing vendor
-# owned data.
-# TODO(b/34980020): Remove this once there are no violations
-attribute vendordata_in_core_violators;
-
 # All types use for sysfs files.
 attribute sysfs_type;
 
@@ -103,6 +94,14 @@ attribute service_manager_type;
 # All types used for services managed by hwservicemanager
 attribute hwservice_manager_type;
 
+# All HwBinder services guaranteed to be passthrough. These services always run
+# in the process of their clients, and thus operate with the same access as
+# their clients.
+attribute same_process_hwservice;
+
+# All HwBinder services guaranteed to be offered only by core domain components
+attribute coredomain_hwservice;
+
 # All types used for services managed by vndservicemanager
 attribute vndservice_manager_type;
 
@@ -149,6 +148,11 @@ attribute binder_in_vendor_violators;
 # communicating with core components
 # TODO(b/36577153): Remove this once there are no violations
 attribute socket_between_core_and_vendor_violators;
+
+# All vendor domains which violate the requirement of not executing
+# system processes
+# TODO(b/36463595)
+attribute vendor_executes_system_violators;
 
 # All HAL servers
 attribute halserverdomain;
@@ -228,6 +232,9 @@ attribute hal_telephony_server;
 attribute hal_thermal;
 attribute hal_thermal_client;
 attribute hal_thermal_server;
+attribute hal_tv_cec;
+attribute hal_tv_cec_client;
+attribute hal_tv_cec_server;
 attribute hal_tv_input;
 attribute hal_tv_input_client;
 attribute hal_tv_input_server;

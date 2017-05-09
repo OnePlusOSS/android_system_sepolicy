@@ -31,6 +31,7 @@ allow priv_app mediacasserver_service:service_manager find;
 allow priv_app mediaextractor_service:service_manager find;
 allow priv_app mediaserver_service:service_manager find;
 allow priv_app nfc_service:service_manager find;
+allow priv_app oem_lock_service:service_manager find;
 allow priv_app radio_service:service_manager find;
 allow priv_app surfaceflinger_service:service_manager find;
 allow priv_app app_api_service:service_manager find;
@@ -72,9 +73,6 @@ userdebug_or_eng(`
   allow priv_app perfprofd_data_file:dir r_dir_perms;
 ')
 
-# Allow GMS core to scan executables on the system partition
-allow priv_app exec_type:file { getattr read open };
-
 # For AppFuse.
 allow priv_app vold:fd use;
 allow priv_app fuse_device:chr_file { read write };
@@ -84,12 +82,19 @@ r_dir_file(priv_app, sysfs_type)
 r_dir_file(priv_app, proc)
 r_dir_file(priv_app, rootfs)
 
+# Allow GMS core to open kernel config for OTA matching through libvintf
+allow priv_app config_gz:file { open read getattr };
+
 # access the mac address
 allowxperm priv_app self:udp_socket ioctl SIOCGIFHWADDR;
 
 # Allow GMS core to communicate with update_engine for A/B update.
 binder_call(priv_app, update_engine)
 allow priv_app update_engine_service:service_manager find;
+
+# Allow GMS core to communicate with dumpsys storaged.
+binder_call(priv_app, storaged)
+allow priv_app storaged_service:service_manager find;
 
 # Allow Phone to read/write cached ringtones (opened by system).
 allow priv_app ringtone_file:file { getattr read write };
@@ -113,6 +118,9 @@ allow priv_app functionfs:file rw_file_perms;
 # Traverse into /mnt/media_rw for bypassing FUSE daemon
 # TODO: narrow this to just MediaProvider
 allow priv_app mnt_media_rw_file:dir search;
+
+# Allow privileged apps (e.g. GMS core) to generate unique hardware IDs
+allow priv_app keystore:keystore_key gen_unique_id;
 
 read_runtime_log_tags(priv_app)
 

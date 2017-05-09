@@ -675,13 +675,6 @@ class hwservice_manager
 	list
 }
 
-class vndservice_manager
-{
-	add
-	find
-	list
-}
-
 class keystore_key
 {
 	get_state
@@ -702,6 +695,7 @@ class keystore_key
 	clear_uid
 	add_auth
 	user_changed
+	gen_unique_id
 }
 
 class drmservice {

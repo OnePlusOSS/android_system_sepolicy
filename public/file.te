@@ -69,6 +69,8 @@ type debugfs_tracing, fs_type, debugfs_type;
 type debugfs_tracing_instances, fs_type, debugfs_type;
 type debugfs_wifi_tracing, fs_type, debugfs_type;
 type tracing_shell_writable, fs_type, debugfs_type;
+type tracing_shell_writable_debug, fs_type, debugfs_type;
+
 type pstorefs, fs_type;
 type functionfs, fs_type, mlstrustedobject;
 type oemfs, fs_type, contextmount_type;
@@ -198,6 +200,7 @@ type reboot_data_file, file_type, data_file_type, core_data_file_type;
 type recovery_data_file, file_type, data_file_type, core_data_file_type;
 type shared_relro_file, file_type, data_file_type, core_data_file_type;
 type systemkeys_data_file, file_type, data_file_type, core_data_file_type;
+type textclassifier_data_file, file_type, data_file_type, core_data_file_type;
 type vpn_data_file, file_type, data_file_type, core_data_file_type;
 type wifi_data_file, file_type, data_file_type, core_data_file_type;
 type zoneinfo_data_file, file_type, data_file_type, core_data_file_type;
@@ -295,6 +298,9 @@ type sepolicy_file, file_type;
 
 # service_contexts file
 type service_contexts_file, file_type;
+
+# hwservice_contexts file
+type hwservice_contexts_file, file_type;
 
 # vndservice_contexts file
 type vndservice_contexts_file, file_type;
