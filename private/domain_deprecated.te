@@ -1,11 +1,12 @@
 # rules removed from the domain attribute
 
 # Search /storage/emulated tmpfs mount.
-allow domain_deprecated tmpfs:dir r_dir_perms;
+allow { domain_deprecated -installd } tmpfs:dir r_dir_perms;
 userdebug_or_eng(`
 auditallow {
   domain_deprecated
   -appdomain
+  -installd
   -sdcardd
   -surfaceflinger
   -system_server
@@ -78,7 +79,6 @@ auditallow {
   -fingerprintd
   -installd
   -keystore
-  -rild
   -surfaceflinger
   -system_server
   -update_engine
@@ -192,7 +192,6 @@ auditallow {
   domain_deprecated
   -fsck
   -fsck_untrusted
-  -rild
   -sdcardd
   -system_server
   -update_engine
@@ -202,7 +201,6 @@ auditallow {
   domain_deprecated
   -fsck
   -fsck_untrusted
-  -rild
   -system_server
   -vold
 } proc:lnk_file { open ioctl lock }; # getattr read granted in domain
@@ -212,7 +210,6 @@ auditallow {
   -fingerprintd
   -healthd
   -netd
-  -rild
   -system_app
   -surfaceflinger
   -system_server
@@ -226,7 +223,6 @@ auditallow {
   -fingerprintd
   -healthd
   -netd
-  -rild
   -system_app
   -surfaceflinger
   -system_server
@@ -240,7 +236,6 @@ auditallow {
   -fingerprintd
   -healthd
   -netd
-  -rild
   -system_app
   -surfaceflinger
   -system_server
@@ -258,7 +253,6 @@ auditallow {
   -installd
   -keystore
   -netd
-  -rild
   -surfaceflinger
   -system_server
   -zygote
@@ -273,7 +267,6 @@ auditallow {
   -installd
   -keystore
   -netd
-  -rild
   -surfaceflinger
   -system_server
   -zygote
