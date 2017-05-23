@@ -6,16 +6,16 @@ type surfaceflinger_exec, exec_type, file_type;
 init_daemon_domain(surfaceflinger)
 
 typeattribute surfaceflinger mlstrustedsubject;
+typeattribute surfaceflinger display_service_server;
 
 read_runtime_log_tags(surfaceflinger)
 
 # Perform HwBinder IPC.
-hwbinder_use(surfaceflinger)
 hal_client_domain(surfaceflinger, hal_graphics_allocator)
-binder_call(surfaceflinger, hal_graphics_composer)
 hal_client_domain(surfaceflinger, hal_graphics_composer)
-binder_call(surfaceflinger, hal_configstore)
 hal_client_domain(surfaceflinger, hal_configstore)
+allow surfaceflinger hal_configstore_ISurfaceFlingerConfigs:hwservice_manager find;
+allow surfaceflinger hidl_token_hwservice:hwservice_manager find;
 
 # Perform Binder IPC.
 binder_use(surfaceflinger)
@@ -53,6 +53,9 @@ set_prop(surfaceflinger, ctl_bootanim_prop)
 allow surfaceflinger appdomain:fd use;
 allow surfaceflinger app_data_file:file { read write };
 
+# Use socket supplied by adbd, for cmd gpu vkjson etc.
+allow surfaceflinger adbd:unix_stream_socket { read write getattr };
+
 # Allow a dumpstate triggered screenshot
 binder_call(surfaceflinger, dumpstate)
 binder_call(surfaceflinger, shell)
@@ -89,11 +92,13 @@ allow surfaceflinger system_server:fd use;
 allow surfaceflinger ion_device:chr_file r_file_perms;
 
 # pdx IPC
-pdx_server(surfaceflinger)
+pdx_server(surfaceflinger, display_client)
+pdx_server(surfaceflinger, display_manager)
+pdx_server(surfaceflinger, display_screenshot)
+pdx_server(surfaceflinger, display_vsync)
 
-use_pdx(surfaceflinger, bufferhubd)
-use_pdx(surfaceflinger, performanced)
-use_pdx(surfaceflinger, sensord)
+pdx_client(surfaceflinger, bufferhub_client)
+pdx_client(surfaceflinger, performance_client)
 
 ###
 ### Neverallow rules

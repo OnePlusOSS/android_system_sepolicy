@@ -1,5 +1,5 @@
 # phone subsystem
-type radio, domain, domain_deprecated, mlstrustedsubject;
+type radio, domain, mlstrustedsubject;
 
 net_domain(radio)
 bluetooth_domain(radio)
@@ -37,5 +37,4 @@ allow radio system_api_service:service_manager find;
 
 # Perform HwBinder IPC.
 hwbinder_use(radio)
-binder_call(radio, hal_telephony)
 hal_client_domain(radio, hal_telephony)

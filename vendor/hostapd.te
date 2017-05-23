@@ -1,6 +1,6 @@
 # userspace wifi access points
 type hostapd, domain;
-type hostapd_exec, exec_type, file_type;
+type hostapd_exec, exec_type, vendor_file_type, file_type;
 
 init_daemon_domain(hostapd)
 
@@ -31,7 +31,3 @@ r_dir_file(hostapd, wifi_data_file)
 allow hostapd hostapd_socket:dir create_dir_perms;
 # hostapd needs to create, bind to, read, and write its control socket.
 allow hostapd hostapd_socket:sock_file create_file_perms;
-
-# TODO (b/36646171) Move hostapd's data access to /data/vendor
-# Remove coredata_in_vendor_violators attribute.
-typeattribute hostapd coredata_in_vendor_violators;
