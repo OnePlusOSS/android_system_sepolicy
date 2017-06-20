@@ -190,8 +190,6 @@ LOCAL_REQUIRED_MODULES += \
     plat_sepolicy.cil \
     plat_and_mapping_sepolicy.cil.sha256 \
     secilc \
-    nonplat_file_contexts \
-    plat_file_contexts \
     plat_sepolicy_vers.txt \
     treble_sepolicy_tests
 
@@ -199,12 +197,15 @@ LOCAL_REQUIRED_MODULES += \
 ifneq ($(PRODUCT_PRECOMPILED_SEPOLICY),false)
 LOCAL_REQUIRED_MODULES += precompiled_sepolicy precompiled_sepolicy.plat_and_mapping.sha256
 endif
-
 else
 # Use monolithic SELinux policy
-LOCAL_REQUIRED_MODULES += sepolicy \
-    file_contexts.bin
+LOCAL_REQUIRED_MODULES += sepolicy
 endif
+
+LOCAL_REQUIRED_MODULES += \
+    nonplat_file_contexts \
+    plat_file_contexts
+
 include $(BUILD_PHONY_PACKAGE)
 
 ##################################
@@ -328,7 +329,7 @@ $(LOCAL_BUILT_MODULE): $(plat_policy.conf) $(HOST_OUT_EXECUTABLES)/checkpolicy \
 	@mkdir -p $(dir $@)
 	$(hide) $(HOST_OUT_EXECUTABLES)/checkpolicy -M -C -c $(POLICYVERS) -o $@ $<
 	$(hide) cat $(PRIVATE_ADDITIONAL_CIL_FILES) >> $@
-	$(hide) $(HOST_OUT_EXECUTABLES)/secilc -M true -G -N -c $(POLICYVERS) $@ -o /dev/null -f /dev/null
+	$(hide) $(HOST_OUT_EXECUTABLES)/secilc -M true -G -c $(POLICYVERS) $@ -o /dev/null -f /dev/null
 
 built_plat_cil := $(LOCAL_BUILT_MODULE)
 plat_policy.conf :=
@@ -680,24 +681,14 @@ file_contexts.local.tmp :=
 ##################################
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := file_contexts.bin.recovery
-LOCAL_MODULE_STEM := file_contexts.bin
-LOCAL_MODULE_CLASS := ETC
-LOCAL_MODULE_TAGS := optional
-LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)
-
-include $(BUILD_SYSTEM)/base_rules.mk
-
-$(LOCAL_BUILT_MODULE): $(built_fc)
-	$(hide) cp -f $< $@
-
-##################################
-include $(CLEAR_VARS)
-
 LOCAL_MODULE := plat_file_contexts
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_TAGS := optional
+ifeq ($(PRODUCT_FULL_TREBLE),true)
 LOCAL_MODULE_PATH := $(TARGET_OUT)/etc/selinux
+else
+LOCAL_MODULE_PATH := $(TARGET_ROOT_OUT)
+endif
 
 include $(BUILD_SYSTEM)/base_rules.mk
 
@@ -727,7 +718,11 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := nonplat_file_contexts
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_TAGS := optional
+ifeq ($(PRODUCT_FULL_TREBLE),true)
 LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/etc/selinux
+else
+LOCAL_MODULE_PATH := $(TARGET_ROOT_OUT)
+endif
 
 include $(BUILD_SYSTEM)/base_rules.mk
 
@@ -747,6 +742,33 @@ $(nonplat_fcfiles_with_nl) $(built_sepolicy)
 built_nonplat_fc := $(LOCAL_BUILT_MODULE)
 nonplat_fc_files :=
 nonplat_fcfiles_with_nl :=
+
+##################################
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := plat_file_contexts.recovery
+LOCAL_MODULE_STEM := plat_file_contexts
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)
+
+include $(BUILD_SYSTEM)/base_rules.mk
+
+$(LOCAL_BUILT_MODULE): $(built_plat_fc)
+	$(hide) cp -f $< $@
+
+##################################
+include $(CLEAR_VARS)
+LOCAL_MODULE := nonplat_file_contexts.recovery
+LOCAL_MODULE_STEM := nonplat_file_contexts
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)
+
+include $(BUILD_SYSTEM)/base_rules.mk
+
+$(LOCAL_BUILT_MODULE): $(built_nonplat_fc)
+	$(hide) cp -f $< $@
 
 ##################################
 include $(CLEAR_VARS)
