@@ -3,3 +3,8 @@ hal_server_domain(hal_wifi_default, hal_wifi)
 
 type hal_wifi_default_exec, exec_type, vendor_file_type, file_type;
 init_daemon_domain(hal_wifi_default)
+
+#sepolicy for wifi mac address
+allow hal_wifi_default persist_file:file { open write getattr };
+allow hal_wifi_default persist_file:dir { search };
+allow hal_wifi_default oem_data_file:file { open read write };
